@@ -63,7 +63,7 @@ const Index = () => {
         <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-accent/5 rounded-full blur-3xl" />
       </div>
 
-      <div className="relative z-10 container max-w-2xl mx-auto px-4 py-12">
+      <div className="relative z-10 container max-w-7xl mx-auto px-4 py-12">
         {/* Header */}
         <div className="text-center mb-10">
           <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-primary/20 mb-4 glow-primary">
@@ -73,21 +73,33 @@ const Index = () => {
             Reel <span className="gradient-text">Analyzer</span>
           </h1>
           <p className="text-muted-foreground max-w-md mx-auto">
-            Upload your video reel to extract transcripts, get AI-powered paraphrasing, and detailed word-level timing.
+            Upload your video reel to extract transcripts and get AI-powered paraphrasing.
           </p>
         </div>
 
-        {/* Main Card */}
-        <div className="glass rounded-2xl p-6 md:p-8 shadow-card">
-          <VideoUploadForm onSubmit={handleSubmit} isLoading={isLoading} />
-        </div>
-
-        {/* Response Display */}
-        {response && (
-          <div className="mt-8">
-            <ResponseDisplay response={response} />
+        {/* Main Content - Side by Side Layout */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          {/* Left Side - Input Form */}
+          <div className="glass rounded-2xl p-6 md:p-8 shadow-card h-fit">
+            <VideoUploadForm onSubmit={handleSubmit} isLoading={isLoading} />
           </div>
-        )}
+
+          {/* Right Side - Response Display */}
+          <div className="h-fit">
+            {response ? (
+              <ResponseDisplay response={response} />
+            ) : (
+              <div className="glass rounded-2xl p-6 md:p-8 shadow-card flex flex-col items-center justify-center min-h-[300px] text-center">
+                <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mb-4">
+                  <Film className="w-8 h-8 text-muted-foreground" />
+                </div>
+                <p className="text-muted-foreground">
+                  Upload a video to see the analysis results here
+                </p>
+              </div>
+            )}
+          </div>
+        </div>
       </div>
     </div>
   );

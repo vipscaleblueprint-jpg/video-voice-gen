@@ -127,59 +127,61 @@ export const ResponseDisplay = ({ response }: ResponseDisplayProps) => {
         className="border-primary/20"
       />
 
-      {/* Script Timeline */}
-      <Collapsible open={isScriptOpen} onOpenChange={setIsScriptOpen}>
-        <div className="glass rounded-xl overflow-hidden">
-          <CollapsibleTrigger asChild>
-            <button className="w-full p-5 flex items-center justify-between hover:bg-muted/50 transition-colors">
-              <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-lg bg-primary/20 flex items-center justify-center">
-                  <Clock className="w-4 h-4 text-primary" />
-                </div>
-                <h3 className="font-semibold text-foreground">Word Timeline</h3>
-                <span className="text-sm text-muted-foreground">
-                  ({response.script.length} words)
-                </span>
-              </div>
-              <ChevronDown
-                className={cn(
-                  "w-5 h-5 text-muted-foreground transition-transform duration-200",
-                  isScriptOpen && "rotate-180"
-                )}
-              />
-            </button>
-          </CollapsibleTrigger>
-          <CollapsibleContent>
-            <div className="px-5 pb-5 max-h-80 overflow-y-auto">
-              <div className="grid gap-1">
-                {response.script.map((item, index) => (
-                  <div
-                    key={index}
-                    className="flex items-center gap-3 p-2 rounded-lg hover:bg-muted/50 transition-colors group"
-                  >
-                    <span className="text-xs text-muted-foreground w-12 font-mono">
-                      {formatTime(item.start)}
-                    </span>
-                    <div className="flex-1">
-                      <span className="text-foreground">{item.text}</span>
-                    </div>
-                    <span className="text-xs text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity">
-                      → {formatTime(item.end)}
-                    </span>
-                    <div
-                      className={cn(
-                        "w-2 h-2 rounded-full",
-                        item.logprob > -0.5 ? "bg-success" : item.logprob > -1 ? "bg-warning" : "bg-destructive"
-                      )}
-                      title={`Confidence: ${Math.round((1 + item.logprob) * 100)}%`}
-                    />
+      {/* Script Details */}
+      {response.script && response.script.length > 0 && (
+        <Collapsible open={isScriptOpen} onOpenChange={setIsScriptOpen}>
+          <div className="glass rounded-xl overflow-hidden">
+            <CollapsibleTrigger asChild>
+              <button className="w-full p-5 flex items-center justify-between hover:bg-muted/50 transition-colors">
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 rounded-lg bg-primary/20 flex items-center justify-center">
+                    <Clock className="w-4 h-4 text-primary" />
                   </div>
-                ))}
+                  <h3 className="font-semibold text-foreground">Script Details</h3>
+                  <span className="text-sm text-muted-foreground">
+                    ({response.script.length} words)
+                  </span>
+                </div>
+                <ChevronDown
+                  className={cn(
+                    "w-5 h-5 text-muted-foreground transition-transform duration-200",
+                    isScriptOpen && "rotate-180"
+                  )}
+                />
+              </button>
+            </CollapsibleTrigger>
+            <CollapsibleContent>
+              <div className="px-5 pb-5 max-h-80 overflow-y-auto">
+                <div className="grid gap-1">
+                  {response.script.map((item, index) => (
+                    <div
+                      key={index}
+                      className="flex items-center gap-3 p-2 rounded-lg hover:bg-muted/50 transition-colors group"
+                    >
+                      <span className="text-xs text-muted-foreground w-12 font-mono">
+                        {formatTime(item.start)}
+                      </span>
+                      <div className="flex-1">
+                        <span className="text-foreground">{item.text}</span>
+                      </div>
+                      <span className="text-xs text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity">
+                        → {formatTime(item.end)}
+                      </span>
+                      <div
+                        className={cn(
+                          "w-2 h-2 rounded-full",
+                          item.logprob > -0.5 ? "bg-success" : item.logprob > -1 ? "bg-warning" : "bg-destructive"
+                        )}
+                        title={`Confidence: ${Math.round((1 + item.logprob) * 100)}%`}
+                      />
+                    </div>
+                  ))}
+                </div>
               </div>
-            </div>
-          </CollapsibleContent>
-        </div>
-      </Collapsible>
+            </CollapsibleContent>
+          </div>
+        </Collapsible>
+      )}
     </div>
   );
 };
