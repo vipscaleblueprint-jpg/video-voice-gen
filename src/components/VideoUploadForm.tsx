@@ -17,6 +17,7 @@ export const VideoUploadForm = ({ onSubmit, isLoading }: VideoUploadFormProps) =
   const [file, setFile] = useState<File | null>(null);
   const [vps, setVps] = useState('');
   const [language, setLanguage] = useState('');
+  const [prompt, setPrompt] = useState('');
   const [isDragging, setIsDragging] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -70,6 +71,9 @@ export const VideoUploadForm = ({ onSubmit, isLoading }: VideoUploadFormProps) =
     formData.append('reel', file);
     formData.append('vps', vps);
     formData.append('language', language);
+    if (prompt) {
+      formData.append('prompt', prompt);
+    }
 
     await onSubmit(formData);
   };
@@ -187,6 +191,20 @@ export const VideoUploadForm = ({ onSubmit, isLoading }: VideoUploadFormProps) =
             className="bg-secondary border-border focus:border-primary focus:ring-primary/20"
           />
         </div>
+      </div>
+
+      {/* Optional Prompt Field */}
+      <div className="space-y-2">
+        <Label htmlFor="prompt" className="text-muted-foreground">
+          Prompt <span className="text-xs opacity-60">(optional)</span>
+        </Label>
+        <Input
+          id="prompt"
+          value={prompt}
+          onChange={(e) => setPrompt(e.target.value)}
+          placeholder="Enter custom prompt..."
+          className="bg-secondary border-border focus:border-primary focus:ring-primary/20"
+        />
       </div>
 
       {/* Submit Button */}
