@@ -8,6 +8,7 @@ interface ApiResponse {
   original: string;
   language_code: string;
   paraphrased: string;
+  hook?: string;
   script: Array<{
     text: string;
     start: number;
