@@ -1,9 +1,17 @@
-import { useState, useCallback, useRef } from 'react';
-import { Upload, Film, X, Loader2, AlertCircle } from 'lucide-react';
+import { useState, useCallback, useRef, useEffect } from 'react';
+import { Upload, Film, X, Loader2, AlertCircle, ChevronDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { cn } from '@/lib/utils';
+
+interface PromptOption {
+  prompt: string;
+  'content type': string;
+}
+
+const PROMPTS_API = 'https://n8n.srv1151765.hstgr.cloud/webhook/32117416-351b-4703-8ffb-931dec69efa4';
 
 interface VideoUploadFormProps {
   onSubmit: (formData: FormData) => Promise<void>;
@@ -15,12 +23,45 @@ const ACCEPTED_FORMATS = ['video/mp4', 'video/quicktime'];
 
 export const VideoUploadForm = ({ onSubmit, isLoading }: VideoUploadFormProps) => {
   const [file, setFile] = useState<File | null>(null);
+  const [videoPreviewUrl, setVideoPreviewUrl] = useState<string | null>(null);
   const [vps, setVps] = useState('');
   const [language, setLanguage] = useState('');
   const [prompt, setPrompt] = useState('');
   const [isDragging, setIsDragging] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [promptOptions, setPromptOptions] = useState<PromptOption[]>([]);
+  const [promptsLoading, setPromptsLoading] = useState(true);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
+
+  // Fetch prompts from API
+  useEffect(() => {
+    const fetchPrompts = async () => {
+      try {
+        const res = await fetch(PROMPTS_API);
+        const data = await res.json();
+        // Filter out empty objects
+        const validPrompts = data.filter((item: PromptOption) => item.prompt);
+        setPromptOptions(validPrompts);
+      } catch (err) {
+        console.error('Failed to fetch prompts:', err);
+      } finally {
+        setPromptsLoading(false);
+      }
+    };
+    fetchPrompts();
+  }, []);
+
+  // Create video preview URL when file changes
+  useEffect(() => {
+    if (file) {
+      const url = URL.createObjectURL(file);
+      setVideoPreviewUrl(url);
+      return () => URL.revokeObjectURL(url);
+    } else {
+      setVideoPreviewUrl(null);
+    }
+  }, [file]);
 
   const validateFile = (file: File): string | null => {
     if (!ACCEPTED_FORMATS.includes(file.type)) {
@@ -107,10 +148,16 @@ export const VideoUploadForm = ({ onSubmit, isLoading }: VideoUploadFormProps) =
         />
         
         <div className="flex flex-col items-center gap-4 text-center">
-          {file ? (
+          {file && videoPreviewUrl ? (
             <>
-              <div className="w-16 h-16 rounded-full bg-success/20 flex items-center justify-center">
-                <Film className="w-8 h-8 text-success" />
+              <div className="w-full max-w-xs rounded-lg overflow-hidden bg-black">
+                <video
+                  ref={videoRef}
+                  src={videoPreviewUrl}
+                  controls
+                  className="w-full h-auto max-h-48 object-contain"
+                  onClick={(e) => e.stopPropagation()}
+                />
               </div>
               <div>
                 <p className="font-medium text-foreground">{file.name}</p>
@@ -193,18 +240,34 @@ export const VideoUploadForm = ({ onSubmit, isLoading }: VideoUploadFormProps) =
         </div>
       </div>
 
-      {/* Optional Prompt Field */}
+      {/* Prompt Dropdown */}
       <div className="space-y-2">
         <Label htmlFor="prompt" className="text-muted-foreground">
           Prompt <span className="text-xs opacity-60">(optional)</span>
         </Label>
-        <Input
-          id="prompt"
-          value={prompt}
-          onChange={(e) => setPrompt(e.target.value)}
-          placeholder="Enter custom prompt..."
-          className="bg-secondary border-border focus:border-primary focus:ring-primary/20"
-        />
+        <Select value={prompt} onValueChange={setPrompt}>
+          <SelectTrigger className="bg-secondary border-border focus:border-primary focus:ring-primary/20">
+            <SelectValue placeholder={promptsLoading ? "Loading prompts..." : "Select a prompt"} />
+          </SelectTrigger>
+          <SelectContent className="bg-popover border-border z-50">
+            {promptOptions.length > 0 ? (
+              promptOptions.map((option, index) => (
+                <SelectItem key={index} value={option.prompt}>
+                  <span className="flex items-center gap-2">
+                    <span className="text-xs px-1.5 py-0.5 rounded bg-primary/20 text-primary">
+                      {option['content type']}
+                    </span>
+                    <span className="truncate max-w-[200px]">{option.prompt}</span>
+                  </span>
+                </SelectItem>
+              ))
+            ) : (
+              <SelectItem value="_empty" disabled>
+                No prompts available
+              </SelectItem>
+            )}
+          </SelectContent>
+        </Select>
       </div>
 
       {/* Submit Button */}
