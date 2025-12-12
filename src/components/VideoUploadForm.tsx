@@ -34,7 +34,13 @@ interface PromptOption {
   'content type': string;
 }
 
+interface VpsOption {
+  vps: string;
+  client: string;
+}
+
 const PROMPTS_API = 'https://n8n.srv1151765.hstgr.cloud/webhook/32117416-351b-4703-8ffb-931dec69efa4';
+const VPS_API = 'https://n8n.srv1151765.hstgr.cloud/webhook/clients/vps';
 
 interface VideoUploadFormProps {
   onSubmit: (formData: FormData) => Promise<void>;
@@ -51,10 +57,13 @@ export const VideoUploadForm = ({ onSubmit, isLoading }: VideoUploadFormProps) =
   const [language, setLanguage] = useState('English');
   const [prompt, setPrompt] = useState('');
   const [selectedPromptTemplate, setSelectedPromptTemplate] = useState('');
+  const [selectedVpsTemplate, setSelectedVpsTemplate] = useState('');
   const [isDragging, setIsDragging] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [promptOptions, setPromptOptions] = useState<PromptOption[]>([]);
   const [promptsLoading, setPromptsLoading] = useState(true);
+  const [vpsOptions, setVpsOptions] = useState<VpsOption[]>([]);
+  const [vpsLoading, setVpsLoading] = useState(true);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
 
@@ -74,6 +83,24 @@ export const VideoUploadForm = ({ onSubmit, isLoading }: VideoUploadFormProps) =
       }
     };
     fetchPrompts();
+  }, []);
+
+  // Fetch VPS options from API
+  useEffect(() => {
+    const fetchVpsOptions = async () => {
+      try {
+        const res = await fetch(VPS_API);
+        const data = await res.json();
+        // Filter out empty objects
+        const validVps = data.filter((item: VpsOption) => item.vps);
+        setVpsOptions(validVps);
+      } catch (err) {
+        console.error('Failed to fetch VPS options:', err);
+      } finally {
+        setVpsLoading(false);
+      }
+    };
+    fetchVpsOptions();
   }, []);
 
   // Create video preview URL when file changes
@@ -246,19 +273,51 @@ export const VideoUploadForm = ({ onSubmit, isLoading }: VideoUploadFormProps) =
         </div>
       )}
 
-      {/* VPS Field */}
-      <div className="space-y-2">
-        <Label htmlFor="vps" className="text-muted-foreground">
+      {/* VPS Section */}
+      <div className="space-y-3">
+        <Label className="text-muted-foreground">
           VPS <span className="text-destructive">*</span>
         </Label>
+        
+        {/* VPS Template Dropdown */}
+        <Select 
+          value={selectedVpsTemplate} 
+          onValueChange={(value) => {
+            setSelectedVpsTemplate(value);
+            setVps(value);
+          }}
+        >
+          <SelectTrigger className="bg-secondary border-border focus:border-primary focus:ring-primary/20">
+            <SelectValue placeholder={vpsLoading ? "Loading VPS options..." : "Select a VPS template"} />
+          </SelectTrigger>
+          <SelectContent className="bg-popover border-border z-50">
+            {vpsOptions.length > 0 ? (
+              vpsOptions.map((option, index) => (
+                <SelectItem key={index} value={option.vps}>
+                  <span className="flex items-center gap-2">
+                    <span className="text-xs px-1.5 py-0.5 rounded bg-accent/20 text-accent-foreground">
+                      {option.client}
+                    </span>
+                    <span className="truncate max-w-[200px]">{option.vps}</span>
+                  </span>
+                </SelectItem>
+              ))
+            ) : (
+              <SelectItem value="_empty" disabled>
+                No VPS options available
+              </SelectItem>
+            )}
+          </SelectContent>
+        </Select>
+
+        {/* Editable VPS Textarea */}
         <Textarea
           id="vps"
           value={vps}
           onChange={(e) => setVps(e.target.value)}
-          placeholder="Enter VPS value"
+          placeholder="Type your VPS or edit the selected template..."
           rows={3}
           className="bg-secondary border-border focus:border-primary focus:ring-primary/20 resize-none"
-          required
         />
       </div>
 
