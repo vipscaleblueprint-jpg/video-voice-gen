@@ -131,14 +131,20 @@ export const VideoUploadForm = ({ onSubmit, isLoading }: VideoUploadFormProps) =
       setError('Please select a video file.');
       return;
     }
+    if (!vps.trim()) {
+      setError('VPS is required.');
+      return;
+    }
+    if (!prompt.trim()) {
+      setError('Prompt is required.');
+      return;
+    }
 
     const formData = new FormData();
     formData.append('reel', file);
     formData.append('vps', vps);
     formData.append('language', language);
-    if (prompt) {
-      formData.append('prompt', prompt);
-    }
+    formData.append('prompt', prompt);
 
     await onSubmit(formData);
   };
@@ -183,8 +189,8 @@ export const VideoUploadForm = ({ onSubmit, isLoading }: VideoUploadFormProps) =
                   onClick={(e) => e.stopPropagation()}
                 />
               </div>
-              <div>
-                <p className="font-medium text-foreground">{file.name}</p>
+              <div className="max-w-full overflow-hidden">
+                <p className="font-medium text-foreground break-words text-sm max-w-[250px]">{file.name}</p>
                 <p className="text-sm text-muted-foreground">{formatFileSize(file.size)}</p>
               </div>
               <Button
@@ -242,7 +248,9 @@ export const VideoUploadForm = ({ onSubmit, isLoading }: VideoUploadFormProps) =
 
       {/* VPS Field */}
       <div className="space-y-2">
-        <Label htmlFor="vps" className="text-muted-foreground">VPS</Label>
+        <Label htmlFor="vps" className="text-muted-foreground">
+          VPS <span className="text-destructive">*</span>
+        </Label>
         <Textarea
           id="vps"
           value={vps}
@@ -250,6 +258,7 @@ export const VideoUploadForm = ({ onSubmit, isLoading }: VideoUploadFormProps) =
           placeholder="Enter VPS value"
           rows={3}
           className="bg-secondary border-border focus:border-primary focus:ring-primary/20 resize-none"
+          required
         />
       </div>
 
@@ -273,7 +282,7 @@ export const VideoUploadForm = ({ onSubmit, isLoading }: VideoUploadFormProps) =
       {/* Prompt Section */}
       <div className="space-y-3">
         <Label className="text-muted-foreground">
-          Prompt <span className="text-xs opacity-60">(optional)</span>
+          Prompt <span className="text-destructive">*</span>
         </Label>
         
         {/* Prompt Template Dropdown */}

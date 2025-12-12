@@ -20,6 +20,7 @@ interface ApiResponse {
   original: string;
   language_code: string;
   paraphrased: string;
+  hook?: string;
   script: ScriptItem[];
 }
 
@@ -126,6 +127,16 @@ export const ResponseDisplay = ({ response }: ResponseDisplayProps) => {
         content={response.paraphrased}
         className="border-primary/20"
       />
+
+      {/* Hook */}
+      {response.hook && (
+        <ResponseCard
+          icon={Sparkles}
+          title="Hook"
+          content={response.hook}
+          className="border-accent/20"
+        />
+      )}
 
       {/* Script Details */}
       {response.script && response.script.length > 0 && (
