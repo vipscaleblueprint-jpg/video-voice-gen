@@ -1,10 +1,33 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
-import { Upload, Film, X, Loader2, AlertCircle, ChevronDown } from 'lucide-react';
+import { Upload, Film, X, Loader2, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { cn } from '@/lib/utils';
+
+const LANGUAGES = [
+  'English',
+  'Tagalog',
+  'Taglish',
+  'Spanish',
+  'French',
+  'German',
+  'Italian',
+  'Portuguese',
+  'Japanese',
+  'Korean',
+  'Chinese',
+  'Hindi',
+  'Arabic',
+  'Russian',
+  'Dutch',
+  'Polish',
+  'Vietnamese',
+  'Thai',
+  'Indonesian',
+  'Malay',
+];
 
 interface PromptOption {
   prompt: string;
@@ -25,8 +48,9 @@ export const VideoUploadForm = ({ onSubmit, isLoading }: VideoUploadFormProps) =
   const [file, setFile] = useState<File | null>(null);
   const [videoPreviewUrl, setVideoPreviewUrl] = useState<string | null>(null);
   const [vps, setVps] = useState('');
-  const [language, setLanguage] = useState('');
+  const [language, setLanguage] = useState('English');
   const [prompt, setPrompt] = useState('');
+  const [selectedPromptTemplate, setSelectedPromptTemplate] = useState('');
   const [isDragging, setIsDragging] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [promptOptions, setPromptOptions] = useState<PromptOption[]>([]);
@@ -216,38 +240,52 @@ export const VideoUploadForm = ({ onSubmit, isLoading }: VideoUploadFormProps) =
         </div>
       )}
 
-      {/* Form Fields */}
-      <div className="grid gap-4 sm:grid-cols-2">
-        <div className="space-y-2">
-          <Label htmlFor="vps" className="text-muted-foreground">VPS</Label>
-          <Input
-            id="vps"
-            value={vps}
-            onChange={(e) => setVps(e.target.value)}
-            placeholder="Enter VPS value"
-            className="bg-secondary border-border focus:border-primary focus:ring-primary/20"
-          />
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="language" className="text-muted-foreground">Language</Label>
-          <Input
-            id="language"
-            value={language}
-            onChange={(e) => setLanguage(e.target.value)}
-            placeholder="e.g., English, Spanish"
-            className="bg-secondary border-border focus:border-primary focus:ring-primary/20"
-          />
-        </div>
+      {/* VPS Field */}
+      <div className="space-y-2">
+        <Label htmlFor="vps" className="text-muted-foreground">VPS</Label>
+        <Textarea
+          id="vps"
+          value={vps}
+          onChange={(e) => setVps(e.target.value)}
+          placeholder="Enter VPS value"
+          rows={3}
+          className="bg-secondary border-border focus:border-primary focus:ring-primary/20 resize-none"
+        />
       </div>
 
-      {/* Prompt Dropdown */}
+      {/* Language Dropdown */}
       <div className="space-y-2">
-        <Label htmlFor="prompt" className="text-muted-foreground">
+        <Label htmlFor="language" className="text-muted-foreground">Language</Label>
+        <Select value={language} onValueChange={setLanguage}>
+          <SelectTrigger className="bg-secondary border-border focus:border-primary focus:ring-primary/20">
+            <SelectValue placeholder="Select a language" />
+          </SelectTrigger>
+          <SelectContent className="bg-popover border-border z-50">
+            {LANGUAGES.map((lang) => (
+              <SelectItem key={lang} value={lang}>
+                {lang}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+
+      {/* Prompt Section */}
+      <div className="space-y-3">
+        <Label className="text-muted-foreground">
           Prompt <span className="text-xs opacity-60">(optional)</span>
         </Label>
-        <Select value={prompt} onValueChange={setPrompt}>
+        
+        {/* Prompt Template Dropdown */}
+        <Select 
+          value={selectedPromptTemplate} 
+          onValueChange={(value) => {
+            setSelectedPromptTemplate(value);
+            setPrompt(value);
+          }}
+        >
           <SelectTrigger className="bg-secondary border-border focus:border-primary focus:ring-primary/20">
-            <SelectValue placeholder={promptsLoading ? "Loading prompts..." : "Select a prompt"} />
+            <SelectValue placeholder={promptsLoading ? "Loading prompts..." : "Select a prompt template"} />
           </SelectTrigger>
           <SelectContent className="bg-popover border-border z-50">
             {promptOptions.length > 0 ? (
@@ -268,6 +306,16 @@ export const VideoUploadForm = ({ onSubmit, isLoading }: VideoUploadFormProps) =
             )}
           </SelectContent>
         </Select>
+
+        {/* Editable Prompt Textarea */}
+        <Textarea
+          id="prompt"
+          value={prompt}
+          onChange={(e) => setPrompt(e.target.value)}
+          placeholder="Type your prompt or edit the selected template..."
+          rows={4}
+          className="bg-secondary border-border focus:border-primary focus:ring-primary/20 resize-none"
+        />
       </div>
 
       {/* Submit Button */}
