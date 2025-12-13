@@ -319,8 +319,8 @@ export const VideoUploadForm = ({ onSubmit, isLoading }: VideoUploadFormProps) =
           value={vps}
           onChange={(e) => setVps(e.target.value)}
           placeholder="Type your VPS or edit the selected template..."
-          rows={3}
-          className="bg-secondary border-border focus:border-primary focus:ring-primary/20 resize-none"
+          rows={6}
+          className="bg-secondary border-border focus:border-primary focus:ring-primary/20 resize-y min-h-[150px]"
         />
       </div>
 
@@ -384,8 +384,8 @@ export const VideoUploadForm = ({ onSubmit, isLoading }: VideoUploadFormProps) =
           value={prompt}
           onChange={(e) => setPrompt(e.target.value)}
           placeholder="Type your prompt or edit the selected template..."
-          rows={4}
-          className="bg-secondary border-border focus:border-primary focus:ring-primary/20 resize-none"
+          rows={8}
+          className="bg-secondary border-border focus:border-primary focus:ring-primary/20 resize-y min-h-[200px]"
         />
       </div>
 
