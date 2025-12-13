@@ -91,9 +91,12 @@ export const VideoUploadForm = ({ onSubmit, isLoading }: VideoUploadFormProps) =
       try {
         const res = await fetch(VPS_API);
         const data = await res.json();
-        // Filter out empty objects
+        // Filter out empty objects and remove duplicates by vps value
         const validVps = data.filter((item: VpsOption) => item.vps);
-        setVpsOptions(validVps);
+        const uniqueVps = validVps.filter((item: VpsOption, index: number, self: VpsOption[]) => 
+          index === self.findIndex((t) => t.vps === item.vps)
+        );
+        setVpsOptions(uniqueVps);
       } catch (err) {
         console.error('Failed to fetch VPS options:', err);
       } finally {
@@ -290,7 +293,7 @@ export const VideoUploadForm = ({ onSubmit, isLoading }: VideoUploadFormProps) =
           <SelectTrigger className="bg-secondary border-border focus:border-primary focus:ring-primary/20">
             <SelectValue placeholder={vpsLoading ? "Loading VPS options..." : "Select a VPS template"} />
           </SelectTrigger>
-          <SelectContent className="bg-popover border-border z-50">
+          <SelectContent className="bg-card border-border z-[100] shadow-lg max-h-[300px]">
             {vpsOptions.length > 0 ? (
               vpsOptions.map((option, index) => (
                 <SelectItem key={index} value={option.vps}>
