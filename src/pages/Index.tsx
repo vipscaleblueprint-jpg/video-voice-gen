@@ -9,7 +9,7 @@ interface ApiResponse {
   language_code: string;
   paraphrased: string;
   hook?: string;
-  script: Array<{
+  timestamps: Array<{
     text: string;
     start: number;
     end: number;
