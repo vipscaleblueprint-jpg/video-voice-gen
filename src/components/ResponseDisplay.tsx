@@ -8,7 +8,7 @@ import {
   CollapsibleTrigger,
 } from '@/components/ui/collapsible';
 
-interface ScriptItem {
+interface TimestampItem {
   text: string;
   start: number;
   end: number;
@@ -21,7 +21,7 @@ interface ApiResponse {
   language_code: string;
   paraphrased: string;
   hook?: string;
-  script: ScriptItem[];
+  timestamps: TimestampItem[];
 }
 
 interface ResponseDisplayProps {
@@ -138,8 +138,8 @@ export const ResponseDisplay = ({ response }: ResponseDisplayProps) => {
         />
       )}
 
-      {/* Script Details */}
-      {response.script && response.script.length > 0 && (
+      {/* Timestamps */}
+      {response.timestamps && response.timestamps.length > 0 && (
         <Collapsible open={isScriptOpen} onOpenChange={setIsScriptOpen}>
           <div className="glass rounded-xl overflow-hidden">
             <CollapsibleTrigger asChild>
@@ -148,9 +148,9 @@ export const ResponseDisplay = ({ response }: ResponseDisplayProps) => {
                   <div className="w-8 h-8 rounded-lg bg-primary/20 flex items-center justify-center">
                     <Clock className="w-4 h-4 text-primary" />
                   </div>
-                  <h3 className="font-semibold text-foreground">Script Details</h3>
+                  <h3 className="font-semibold text-foreground">Timestamps</h3>
                   <span className="text-sm text-muted-foreground">
-                    ({response.script.length} words)
+                    ({response.timestamps.filter(t => t.type === 'word').length} words)
                   </span>
                 </div>
                 <ChevronDown
@@ -163,30 +163,21 @@ export const ResponseDisplay = ({ response }: ResponseDisplayProps) => {
             </CollapsibleTrigger>
             <CollapsibleContent>
               <div className="px-5 pb-5 max-h-80 overflow-y-auto">
-                <div className="grid gap-1">
-                  {response.script.map((item, index) => (
-                    <div
-                      key={index}
-                      className="flex items-center gap-3 p-2 rounded-lg hover:bg-muted/50 transition-colors group"
-                    >
-                      <span className="text-xs text-muted-foreground w-12 font-mono">
-                        {formatTime(item.start)}
+                <div className="flex flex-wrap gap-1">
+                  {response.timestamps
+                    .filter(item => item.type === 'word')
+                    .map((item, index) => (
+                      <span
+                        key={index}
+                        className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-muted/50 hover:bg-muted transition-colors cursor-default group"
+                        title={`${formatTime(item.start)} → ${formatTime(item.end)}`}
+                      >
+                        <span className="text-foreground text-sm">{item.text.trim()}</span>
+                        <span className="text-[10px] text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity font-mono">
+                          {formatTime(item.start)}
+                        </span>
                       </span>
-                      <div className="flex-1">
-                        <span className="text-foreground">{item.text}</span>
-                      </div>
-                      <span className="text-xs text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity">
-                        → {formatTime(item.end)}
-                      </span>
-                      <div
-                        className={cn(
-                          "w-2 h-2 rounded-full",
-                          item.logprob > -0.5 ? "bg-success" : item.logprob > -1 ? "bg-warning" : "bg-destructive"
-                        )}
-                        title={`Confidence: ${Math.round((1 + item.logprob) * 100)}%`}
-                      />
-                    </div>
-                  ))}
+                    ))}
                 </div>
               </div>
             </CollapsibleContent>
