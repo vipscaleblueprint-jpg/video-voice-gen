@@ -87,8 +87,36 @@ const ResponseCard = ({
 
 const formatTime = (seconds: number) => {
   const mins = Math.floor(seconds / 60);
-  const secs = (seconds % 60).toFixed(1);
-  return mins > 0 ? `${mins}:${secs.padStart(4, '0')}` : `${secs}s`;
+  const secs = Math.floor(seconds % 60);
+  return `${mins}:${secs.toString().padStart(2, '0')}`;
+};
+
+// Group timestamps into sentences/segments (split by punctuation or pauses)
+const groupTimestampsIntoSegments = (timestamps: TimestampItem[]) => {
+  const words = timestamps.filter(t => t.type === 'word');
+  if (words.length === 0) return [];
+
+  const segments: { start: number; end: number; text: string }[] = [];
+  let currentSegment = { start: words[0].start, end: words[0].end, text: words[0].text };
+
+  for (let i = 1; i < words.length; i++) {
+    const word = words[i];
+    const prevWord = words[i - 1];
+    const gap = word.start - prevWord.end;
+    const endsWithPunctuation = /[.!?,;:]/.test(prevWord.text.trim());
+
+    // Start new segment if there's a significant pause (>0.5s) or punctuation
+    if (gap > 0.5 || endsWithPunctuation) {
+      segments.push(currentSegment);
+      currentSegment = { start: word.start, end: word.end, text: word.text };
+    } else {
+      currentSegment.end = word.end;
+      currentSegment.text += ' ' + word.text.trim();
+    }
+  }
+  segments.push(currentSegment);
+
+  return segments;
 };
 
 export const ResponseDisplay = ({ response }: ResponseDisplayProps) => {
@@ -150,35 +178,41 @@ export const ResponseDisplay = ({ response }: ResponseDisplayProps) => {
                   </div>
                   <h3 className="font-semibold text-foreground">Timestamps</h3>
                   <span className="text-sm text-muted-foreground">
-                    ({response.timestamps.filter(t => t.type === 'word').length} words)
+                    ({groupTimestampsIntoSegments(response.timestamps).length} segments)
                   </span>
                 </div>
-                <ChevronDown
-                  className={cn(
-                    "w-5 h-5 text-muted-foreground transition-transform duration-200",
-                    isScriptOpen && "rotate-180"
-                  )}
-                />
+                <div className="flex items-center gap-2">
+                  <CopyButton 
+                    text={groupTimestampsIntoSegments(response.timestamps)
+                      .map(seg => `${formatTime(seg.start)}–${formatTime(seg.end)}\n"${seg.text.trim()}"`)
+                      .join('\n\n')} 
+                  />
+                  <ChevronDown
+                    className={cn(
+                      "w-5 h-5 text-muted-foreground transition-transform duration-200",
+                      isScriptOpen && "rotate-180"
+                    )}
+                  />
+                </div>
               </button>
             </CollapsibleTrigger>
             <CollapsibleContent>
-              <div className="px-5 pb-5 max-h-80 overflow-y-auto">
-                <div className="flex flex-wrap gap-1">
-                  {response.timestamps
-                    .filter(item => item.type === 'word')
-                    .map((item, index) => (
-                      <span
-                        key={index}
-                        className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-muted/50 hover:bg-muted transition-colors cursor-default group"
-                        title={`${formatTime(item.start)} → ${formatTime(item.end)}`}
-                      >
-                        <span className="text-foreground text-sm">{item.text.trim()}</span>
-                        <span className="text-[10px] text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity font-mono">
-                          {formatTime(item.start)}
-                        </span>
+              <div className="px-5 pb-5 max-h-96 overflow-y-auto space-y-3">
+                {groupTimestampsIntoSegments(response.timestamps).map((segment, index) => (
+                  <div 
+                    key={index}
+                    className="p-3 rounded-lg bg-muted/30 border border-border/50 hover:bg-muted/50 transition-colors"
+                  >
+                    <div className="flex items-center gap-2 mb-2">
+                      <span className="text-xs font-mono px-2 py-1 rounded bg-primary/20 text-primary font-semibold">
+                        {formatTime(segment.start)}–{formatTime(segment.end)}
                       </span>
-                    ))}
-                </div>
+                    </div>
+                    <p className="text-sm text-foreground leading-relaxed">
+                      "{segment.text.trim()}"
+                    </p>
+                  </div>
+                ))}
               </div>
             </CollapsibleContent>
           </div>
