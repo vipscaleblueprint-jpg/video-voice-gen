@@ -13,8 +13,6 @@ interface ApiResponse {
     text: string;
     start: number;
     end: number;
-    type: string;
-    logprob: number;
   }>;
 }
 
