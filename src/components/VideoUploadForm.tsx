@@ -56,6 +56,7 @@ export const VideoUploadForm = ({ onSubmit, isLoading }: VideoUploadFormProps) =
   const [vps, setVps] = useState('');
   const [language, setLanguage] = useState('English');
   const [prompt, setPrompt] = useState('');
+  const [contentType, setContentType] = useState('');
   const [selectedPromptTemplate, setSelectedPromptTemplate] = useState('');
   const [selectedVpsTemplate, setSelectedVpsTemplate] = useState('');
   const [isDragging, setIsDragging] = useState(false);
@@ -175,6 +176,7 @@ export const VideoUploadForm = ({ onSubmit, isLoading }: VideoUploadFormProps) =
     formData.append('vps', vps);
     formData.append('language', language);
     formData.append('prompt', prompt);
+    formData.append('content_type', contentType);
 
     await onSubmit(formData);
   };
@@ -353,6 +355,8 @@ export const VideoUploadForm = ({ onSubmit, isLoading }: VideoUploadFormProps) =
           onValueChange={(value) => {
             setSelectedPromptTemplate(value);
             setPrompt(value);
+            const selectedOption = promptOptions.find(opt => opt.prompt === value);
+            setContentType(selectedOption?.['content type'] || '');
           }}
         >
           <SelectTrigger className="bg-secondary border-border focus:border-primary focus:ring-primary/20">
