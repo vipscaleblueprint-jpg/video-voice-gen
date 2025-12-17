@@ -69,7 +69,7 @@ const Index = () => {
             <Film className="w-8 h-8 text-primary" />
           </div>
           <h1 className="text-3xl md:text-4xl font-bold text-foreground mb-2">
-            Reel <span className="gradient-text">Analyzer</span>
+            Reel Content <span className="gradient-text">Paraphraser</span>
           </h1>
           <p className="text-muted-foreground max-w-md mx-auto">
             Upload your video reel to extract transcripts and get AI-powered paraphrasing.
