@@ -39,8 +39,13 @@ interface VpsOption {
   client: string;
 }
 
+interface CtaOption {
+  cta: string;
+}
+
 const PROMPTS_API = 'https://n8n.srv1151765.hstgr.cloud/webhook/32117416-351b-4703-8ffb-931dec69efa4';
 const VPS_API = 'https://n8n.srv1151765.hstgr.cloud/webhook/clients/vps';
+const CTA_API = 'https://n8n.srv1151765.hstgr.cloud/webhook/e5260e03-6ded-4448-ab29-52f88af0d35b';
 
 interface VideoUploadFormProps {
   onSubmit: (formData: FormData) => Promise<void>;
@@ -65,6 +70,11 @@ export const VideoUploadForm = ({ onSubmit, isLoading }: VideoUploadFormProps) =
   const [promptsLoading, setPromptsLoading] = useState(true);
   const [vpsOptions, setVpsOptions] = useState<VpsOption[]>([]);
   const [vpsLoading, setVpsLoading] = useState(true);
+  const [ctaOptions, setCtaOptions] = useState<CtaOption[]>([]);
+  const [ctaLoading, setCtaLoading] = useState(true);
+  const [selectedCta, setSelectedCta] = useState('');
+  const [caption, setCaption] = useState('');
+  const [captionPrompt, setCaptionPrompt] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
 
@@ -105,6 +115,23 @@ export const VideoUploadForm = ({ onSubmit, isLoading }: VideoUploadFormProps) =
       }
     };
     fetchVpsOptions();
+  }, []);
+
+  // Fetch CTA options from API
+  useEffect(() => {
+    const fetchCtaOptions = async () => {
+      try {
+        const res = await fetch(CTA_API);
+        const data = await res.json();
+        const validCta = data.filter((item: CtaOption) => item.cta);
+        setCtaOptions(validCta);
+      } catch (err) {
+        console.error('Failed to fetch CTA options:', err);
+      } finally {
+        setCtaLoading(false);
+      }
+    };
+    fetchCtaOptions();
   }, []);
 
   // Create video preview URL when file changes
@@ -177,6 +204,13 @@ export const VideoUploadForm = ({ onSubmit, isLoading }: VideoUploadFormProps) =
     formData.append('language', language);
     formData.append('prompt', prompt);
     formData.append('content_type', contentType);
+    formData.append('cta', selectedCta);
+    if (caption.trim()) {
+      formData.append('caption', caption);
+    }
+    if (captionPrompt.trim()) {
+      formData.append('caption_prompt', captionPrompt);
+    }
 
     await onSubmit(formData);
   };
@@ -390,6 +424,59 @@ export const VideoUploadForm = ({ onSubmit, isLoading }: VideoUploadFormProps) =
           placeholder="Type your prompt or edit the selected template..."
           rows={8}
           className="bg-secondary border-border focus:border-primary focus:ring-primary/20 resize-y min-h-[200px]"
+        />
+      </div>
+
+      {/* CTA Dropdown */}
+      <div className="space-y-2">
+        <Label htmlFor="cta" className="text-muted-foreground">CTA (Call to Action)</Label>
+        <Select value={selectedCta} onValueChange={setSelectedCta}>
+          <SelectTrigger className="bg-secondary border-border focus:border-primary focus:ring-primary/20">
+            <SelectValue placeholder={ctaLoading ? "Loading CTA options..." : "Select a CTA"} />
+          </SelectTrigger>
+          <SelectContent className="bg-popover border-border z-50">
+            {ctaOptions.length > 0 ? (
+              ctaOptions.map((option, index) => (
+                <SelectItem key={index} value={option.cta}>
+                  {option.cta}
+                </SelectItem>
+              ))
+            ) : (
+              <SelectItem value="_empty" disabled>
+                No CTA options available
+              </SelectItem>
+            )}
+          </SelectContent>
+        </Select>
+      </div>
+
+      {/* Caption (Optional) */}
+      <div className="space-y-2">
+        <Label htmlFor="caption" className="text-muted-foreground">
+          Caption <span className="text-xs text-muted-foreground/70">(Optional)</span>
+        </Label>
+        <Textarea
+          id="caption"
+          value={caption}
+          onChange={(e) => setCaption(e.target.value)}
+          placeholder="Enter a caption for the video..."
+          rows={3}
+          className="bg-secondary border-border focus:border-primary focus:ring-primary/20 resize-y"
+        />
+      </div>
+
+      {/* Caption Prompt (Optional) */}
+      <div className="space-y-2">
+        <Label htmlFor="captionPrompt" className="text-muted-foreground">
+          Caption Prompt <span className="text-xs text-muted-foreground/70">(Optional)</span>
+        </Label>
+        <Textarea
+          id="captionPrompt"
+          value={captionPrompt}
+          onChange={(e) => setCaptionPrompt(e.target.value)}
+          placeholder="Enter a prompt for generating captions..."
+          rows={4}
+          className="bg-secondary border-border focus:border-primary focus:ring-primary/20 resize-y"
         />
       </div>
 
