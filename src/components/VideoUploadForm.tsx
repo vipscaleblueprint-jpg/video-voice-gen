@@ -1,9 +1,10 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
-import { Upload, Film, X, Loader2, AlertCircle } from 'lucide-react';
+import { Upload, Film, X, Loader2, AlertCircle, ChevronDown, ChevronUp } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Switch } from '@/components/ui/switch';
 import { cn } from '@/lib/utils';
 
 const LANGUAGES = [
@@ -34,17 +35,11 @@ interface PromptOption {
   'content type': string;
 }
 
-interface VpsOption {
-  vps: string;
-  client: string;
-}
-
 interface CtaOption {
   cta: string;
 }
 
 const PROMPTS_API = 'https://n8n.srv1151765.hstgr.cloud/webhook/32117416-351b-4703-8ffb-931dec69efa4';
-const VPS_API = 'https://n8n.srv1151765.hstgr.cloud/webhook/clients/vps';
 const CTA_API = 'https://n8n.srv1151765.hstgr.cloud/webhook/e5260e03-6ded-4448-ab29-52f88af0d35b';
 
 interface VideoUploadFormProps {
@@ -58,23 +53,20 @@ const ACCEPTED_FORMATS = ['video/mp4', 'video/quicktime'];
 export const VideoUploadForm = ({ onSubmit, isLoading }: VideoUploadFormProps) => {
   const [file, setFile] = useState<File | null>(null);
   const [videoPreviewUrl, setVideoPreviewUrl] = useState<string | null>(null);
-  const [vps, setVps] = useState('');
   const [language, setLanguage] = useState('English');
   const [prompt, setPrompt] = useState('');
   const [contentType, setContentType] = useState('');
   const [selectedPromptTemplate, setSelectedPromptTemplate] = useState('');
-  const [selectedVpsTemplate, setSelectedVpsTemplate] = useState('');
   const [isDragging, setIsDragging] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [promptOptions, setPromptOptions] = useState<PromptOption[]>([]);
   const [promptsLoading, setPromptsLoading] = useState(true);
-  const [vpsOptions, setVpsOptions] = useState<VpsOption[]>([]);
-  const [vpsLoading, setVpsLoading] = useState(true);
   const [ctaOptions, setCtaOptions] = useState<CtaOption[]>([]);
   const [ctaLoading, setCtaLoading] = useState(true);
   const [selectedCta, setSelectedCta] = useState('');
   const [caption, setCaption] = useState('');
   const [captionPrompt, setCaptionPrompt] = useState('');
+  const [showCaptionFields, setShowCaptionFields] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
 
@@ -96,26 +88,6 @@ export const VideoUploadForm = ({ onSubmit, isLoading }: VideoUploadFormProps) =
     fetchPrompts();
   }, []);
 
-  // Fetch VPS options from API
-  useEffect(() => {
-    const fetchVpsOptions = async () => {
-      try {
-        const res = await fetch(VPS_API);
-        const data = await res.json();
-        // Filter out empty objects and remove duplicates by vps value
-        const validVps = data.filter((item: VpsOption) => item.vps);
-        const uniqueVps = validVps.filter((item: VpsOption, index: number, self: VpsOption[]) => 
-          index === self.findIndex((t) => t.vps === item.vps)
-        );
-        setVpsOptions(uniqueVps);
-      } catch (err) {
-        console.error('Failed to fetch VPS options:', err);
-      } finally {
-        setVpsLoading(false);
-      }
-    };
-    fetchVpsOptions();
-  }, []);
 
   // Fetch CTA options from API
   useEffect(() => {
@@ -189,10 +161,6 @@ export const VideoUploadForm = ({ onSubmit, isLoading }: VideoUploadFormProps) =
       setError('Please select a video file.');
       return;
     }
-    if (!vps.trim()) {
-      setError('VPS is required.');
-      return;
-    }
     if (!prompt.trim()) {
       setError('Prompt is required.');
       return;
@@ -200,7 +168,6 @@ export const VideoUploadForm = ({ onSubmit, isLoading }: VideoUploadFormProps) =
 
     const formData = new FormData();
     formData.append('reel', file);
-    formData.append('vps', vps);
     formData.append('language', language);
     formData.append('prompt', prompt);
     formData.append('content_type', contentType);
@@ -312,53 +279,6 @@ export const VideoUploadForm = ({ onSubmit, isLoading }: VideoUploadFormProps) =
         </div>
       )}
 
-      {/* VPS Section */}
-      <div className="space-y-3">
-        <Label className="text-muted-foreground">
-          VPS <span className="text-destructive">*</span>
-        </Label>
-        
-        {/* VPS Template Dropdown */}
-        <Select 
-          value={selectedVpsTemplate} 
-          onValueChange={(value) => {
-            setSelectedVpsTemplate(value);
-            setVps(value);
-          }}
-        >
-          <SelectTrigger className="bg-secondary border-border focus:border-primary focus:ring-primary/20">
-            <SelectValue placeholder={vpsLoading ? "Loading VPS options..." : "Select a VPS template"} />
-          </SelectTrigger>
-          <SelectContent className="bg-card border-border z-[100] shadow-lg max-h-[300px]">
-            {vpsOptions.length > 0 ? (
-              vpsOptions.map((option, index) => (
-                <SelectItem key={index} value={option.vps}>
-                  <span className="flex items-center gap-2">
-                    <span className="text-xs px-1.5 py-0.5 rounded bg-accent/20 text-accent-foreground">
-                      {option.client}
-                    </span>
-                    <span className="truncate max-w-[200px]">{option.vps}</span>
-                  </span>
-                </SelectItem>
-              ))
-            ) : (
-              <SelectItem value="_empty" disabled>
-                No VPS options available
-              </SelectItem>
-            )}
-          </SelectContent>
-        </Select>
-
-        {/* Editable VPS Textarea */}
-        <Textarea
-          id="vps"
-          value={vps}
-          onChange={(e) => setVps(e.target.value)}
-          placeholder="Type your VPS or edit the selected template..."
-          rows={6}
-          className="bg-secondary border-border focus:border-primary focus:ring-primary/20 resize-y min-h-[150px]"
-        />
-      </div>
 
       {/* Language Dropdown */}
       <div className="space-y-2">
@@ -427,6 +347,56 @@ export const VideoUploadForm = ({ onSubmit, isLoading }: VideoUploadFormProps) =
         />
       </div>
 
+      {/* Caption Toggle and Fields */}
+      <div className="space-y-3">
+        <div className="flex items-center justify-between">
+          <Label className="text-muted-foreground flex items-center gap-2">
+            Caption Options <span className="text-xs text-muted-foreground/70">(Optional)</span>
+          </Label>
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-muted-foreground">{showCaptionFields ? 'Hide' : 'Show'}</span>
+            <Switch 
+              checked={showCaptionFields} 
+              onCheckedChange={setShowCaptionFields}
+            />
+          </div>
+        </div>
+
+        {showCaptionFields && (
+          <div className="space-y-4 animate-in fade-in slide-in-from-top-2 duration-200">
+            {/* Caption */}
+            <div className="space-y-2">
+              <Label htmlFor="caption" className="text-muted-foreground">
+                Caption
+              </Label>
+              <Textarea
+                id="caption"
+                value={caption}
+                onChange={(e) => setCaption(e.target.value)}
+                placeholder="Enter a caption for the video..."
+                rows={3}
+                className="bg-secondary border-border focus:border-primary focus:ring-primary/20 resize-y"
+              />
+            </div>
+
+            {/* Caption Prompt */}
+            <div className="space-y-2">
+              <Label htmlFor="captionPrompt" className="text-muted-foreground">
+                Caption Prompt
+              </Label>
+              <Textarea
+                id="captionPrompt"
+                value={captionPrompt}
+                onChange={(e) => setCaptionPrompt(e.target.value)}
+                placeholder="Enter a prompt for generating captions..."
+                rows={4}
+                className="bg-secondary border-border focus:border-primary focus:ring-primary/20 resize-y"
+              />
+            </div>
+          </div>
+        )}
+      </div>
+
       {/* CTA Dropdown */}
       <div className="space-y-2">
         <Label htmlFor="cta" className="text-muted-foreground">CTA (Call to Action)</Label>
@@ -448,36 +418,6 @@ export const VideoUploadForm = ({ onSubmit, isLoading }: VideoUploadFormProps) =
             )}
           </SelectContent>
         </Select>
-      </div>
-
-      {/* Caption (Optional) */}
-      <div className="space-y-2">
-        <Label htmlFor="caption" className="text-muted-foreground">
-          Caption <span className="text-xs text-muted-foreground/70">(Optional)</span>
-        </Label>
-        <Textarea
-          id="caption"
-          value={caption}
-          onChange={(e) => setCaption(e.target.value)}
-          placeholder="Enter a caption for the video..."
-          rows={3}
-          className="bg-secondary border-border focus:border-primary focus:ring-primary/20 resize-y"
-        />
-      </div>
-
-      {/* Caption Prompt (Optional) */}
-      <div className="space-y-2">
-        <Label htmlFor="captionPrompt" className="text-muted-foreground">
-          Caption Prompt <span className="text-xs text-muted-foreground/70">(Optional)</span>
-        </Label>
-        <Textarea
-          id="captionPrompt"
-          value={captionPrompt}
-          onChange={(e) => setCaptionPrompt(e.target.value)}
-          placeholder="Enter a prompt for generating captions..."
-          rows={4}
-          className="bg-secondary border-border focus:border-primary focus:ring-primary/20 resize-y"
-        />
       </div>
 
       {/* Submit Button */}
