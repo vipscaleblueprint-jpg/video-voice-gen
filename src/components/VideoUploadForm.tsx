@@ -330,6 +330,16 @@ export const VideoUploadForm = ({ onSubmit, isLoading }: VideoUploadFormProps) =
           </SelectContent>
         </Select>
 
+        {/* Add new prompt link */}
+        <a
+          href="https://docs.google.com/spreadsheets/d/1oQUbYqCJ-7A7S33459JycD2h60bb7Z8El1p4cTD5B_s/edit?gid=1974246146#gid=1974246146"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex items-center gap-1 text-sm text-primary hover:text-primary/80 hover:underline transition-colors"
+        >
+          + Add a new prompt template
+        </a>
+
         {/* Editable Prompt Textarea */}
         <Textarea
           id="prompt"
@@ -357,11 +367,14 @@ export const VideoUploadForm = ({ onSubmit, isLoading }: VideoUploadFormProps) =
       </div>
 
       {/* CTA Dropdown */}
-      <div className="space-y-2">
+      <div className="space-y-3">
         <Label htmlFor="cta" className="text-muted-foreground">CTA (Call to Action)</Label>
-        <Select value={selectedCta} onValueChange={setSelectedCta}>
+        <Select 
+          value={ctaOptions.find(opt => opt.cta === selectedCta)?.cta || ''} 
+          onValueChange={setSelectedCta}
+        >
           <SelectTrigger className="bg-secondary border-border focus:border-primary focus:ring-primary/20">
-            <SelectValue placeholder={ctaLoading ? "Loading CTA options..." : "Select a CTA"} />
+            <SelectValue placeholder={ctaLoading ? "Loading CTA options..." : "Select a CTA template"} />
           </SelectTrigger>
           <SelectContent className="bg-popover border-border z-50">
             {ctaOptions.length > 0 ? (
@@ -377,6 +390,16 @@ export const VideoUploadForm = ({ onSubmit, isLoading }: VideoUploadFormProps) =
             )}
           </SelectContent>
         </Select>
+        
+        {/* Editable CTA Textarea */}
+        <Textarea
+          id="cta"
+          value={selectedCta}
+          onChange={(e) => setSelectedCta(e.target.value)}
+          placeholder="Select a template above or type your own CTA..."
+          rows={2}
+          className="bg-secondary border-border focus:border-primary focus:ring-primary/20 resize-y"
+        />
       </div>
 
       {/* Submit Button */}
