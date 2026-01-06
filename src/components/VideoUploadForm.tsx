@@ -1,10 +1,9 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
-import { Upload, Film, X, Loader2, AlertCircle, ChevronDown, ChevronUp } from 'lucide-react';
+import { Upload, Film, X, Loader2, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Switch } from '@/components/ui/switch';
 import { cn } from '@/lib/utils';
 
 const LANGUAGES = [
@@ -65,8 +64,6 @@ export const VideoUploadForm = ({ onSubmit, isLoading }: VideoUploadFormProps) =
   const [ctaLoading, setCtaLoading] = useState(true);
   const [selectedCta, setSelectedCta] = useState('');
   const [caption, setCaption] = useState('');
-  const [captionPrompt, setCaptionPrompt] = useState('');
-  const [showCaptionFields, setShowCaptionFields] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
 
@@ -174,9 +171,6 @@ export const VideoUploadForm = ({ onSubmit, isLoading }: VideoUploadFormProps) =
     formData.append('cta', selectedCta);
     if (caption.trim()) {
       formData.append('caption', caption);
-    }
-    if (captionPrompt.trim()) {
-      formData.append('caption_prompt', captionPrompt);
     }
 
     await onSubmit(formData);
@@ -347,54 +341,19 @@ export const VideoUploadForm = ({ onSubmit, isLoading }: VideoUploadFormProps) =
         />
       </div>
 
-      {/* Caption Toggle and Fields */}
-      <div className="space-y-3">
-        <div className="flex items-center justify-between">
-          <Label className="text-muted-foreground flex items-center gap-2">
-            Caption Options <span className="text-xs text-muted-foreground/70">(Optional)</span>
-          </Label>
-          <div className="flex items-center gap-2">
-            <span className="text-xs text-muted-foreground">{showCaptionFields ? 'Hide' : 'Show'}</span>
-            <Switch 
-              checked={showCaptionFields} 
-              onCheckedChange={setShowCaptionFields}
-            />
-          </div>
-        </div>
-
-        {showCaptionFields && (
-          <div className="space-y-4 animate-in fade-in slide-in-from-top-2 duration-200">
-            {/* Caption */}
-            <div className="space-y-2">
-              <Label htmlFor="caption" className="text-muted-foreground">
-                Caption
-              </Label>
-              <Textarea
-                id="caption"
-                value={caption}
-                onChange={(e) => setCaption(e.target.value)}
-                placeholder="Enter a caption for the video..."
-                rows={3}
-                className="bg-secondary border-border focus:border-primary focus:ring-primary/20 resize-y"
-              />
-            </div>
-
-            {/* Caption Prompt */}
-            <div className="space-y-2">
-              <Label htmlFor="captionPrompt" className="text-muted-foreground">
-                Caption Prompt
-              </Label>
-              <Textarea
-                id="captionPrompt"
-                value={captionPrompt}
-                onChange={(e) => setCaptionPrompt(e.target.value)}
-                placeholder="Enter a prompt for generating captions..."
-                rows={4}
-                className="bg-secondary border-border focus:border-primary focus:ring-primary/20 resize-y"
-              />
-            </div>
-          </div>
-        )}
+      {/* Caption (Optional) */}
+      <div className="space-y-2">
+        <Label htmlFor="caption" className="text-muted-foreground">
+          Caption <span className="text-xs text-muted-foreground/70">(Optional)</span>
+        </Label>
+        <Textarea
+          id="caption"
+          value={caption}
+          onChange={(e) => setCaption(e.target.value)}
+          placeholder="Enter a caption for the video..."
+          rows={3}
+          className="bg-secondary border-border focus:border-primary focus:ring-primary/20 resize-y"
+        />
       </div>
 
       {/* CTA Dropdown */}
