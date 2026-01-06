@@ -1,4 +1,4 @@
-import { ChevronDown, Copy, Check, FileText, Globe, Sparkles, Clock } from 'lucide-react';
+import { ChevronDown, Copy, Check, FileText, Globe, Sparkles, Clock, MessageSquare } from 'lucide-react';
 import { useState } from 'react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -19,6 +19,7 @@ interface ApiResponse {
   language_code: string;
   paraphrased: string;
   hook?: string;
+  captions?: string;
   timestamps: TimestampItem[];
 }
 
@@ -134,6 +135,16 @@ export const ResponseDisplay = ({ response }: ResponseDisplayProps) => {
           title="Hook"
           content={response.hook}
           className="border-accent/20"
+        />
+      )}
+
+      {/* Captions */}
+      {response.captions && (
+        <ResponseCard
+          icon={MessageSquare}
+          title="Captions"
+          content={response.captions}
+          className="border-primary/20"
         />
       )}
 

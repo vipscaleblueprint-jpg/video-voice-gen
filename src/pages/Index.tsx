@@ -9,6 +9,7 @@ interface ApiResponse {
   language_code: string;
   paraphrased: string;
   hook?: string;
+  captions?: string;
   timestamps: Array<{
     text: string;
     start: number;
