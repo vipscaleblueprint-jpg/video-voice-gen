@@ -19,7 +19,7 @@ interface ApiResponse {
   language_code: string;
   paraphrased: string;
   hook?: string;
-  captions?: string;
+  caption?: string;
   timestamps: TimestampItem[];
 }
 
@@ -138,12 +138,12 @@ export const ResponseDisplay = ({ response }: ResponseDisplayProps) => {
         />
       )}
 
-      {/* Captions */}
-      {response.captions && (
+      {/* Caption */}
+      {response.caption && (
         <ResponseCard
           icon={MessageSquare}
-          title="Captions"
-          content={response.captions}
+          title="Caption"
+          content={response.caption}
           className="border-primary/20"
         />
       )}
