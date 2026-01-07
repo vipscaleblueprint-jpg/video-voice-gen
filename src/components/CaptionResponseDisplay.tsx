@@ -53,9 +53,9 @@ const CopyButton = ({ text }: { text: string }) => {
 };
 
 export const CaptionResponseDisplay = ({ captions }: CaptionResponseDisplayProps) => {
-  // Filter out empty/null/undefined captions
+  // Filter out empty/null/undefined captions (handle non-string values safely)
   const validCaptions = Object.entries(captions).filter(
-    ([_, value]) => value && value.trim() !== ''
+    ([_, value]) => typeof value === 'string' && value.trim() !== ''
   ) as [keyof SocialCaptions, string][];
 
   if (validCaptions.length === 0) {
