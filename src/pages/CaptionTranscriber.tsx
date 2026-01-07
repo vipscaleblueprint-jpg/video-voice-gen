@@ -1,30 +1,36 @@
 import { useState } from 'react';
-import { VideoUploadForm } from '@/components/VideoUploadForm';
-import { ResponseDisplay } from '@/components/ResponseDisplay';
-import { Film } from 'lucide-react';
+import { CaptionUploadForm } from '@/components/CaptionUploadForm';
+import { CaptionResponseDisplay } from '@/components/CaptionResponseDisplay';
+import { MessageSquare } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { NavLink } from '@/components/NavLink';
-import type { SocialCaptions } from '@/pages/CaptionTranscriber';
 
-interface ApiResponse {
-  original: string;
-  language_code: string;
-  paraphrased: string;
-  hook?: string;
-  caption?: string;
-  captions?: SocialCaptions;
-  timestamps: Array<{
-    text: string;
-    start: number;
-    end: number;
-  }>;
+export interface SocialCaptions {
+  facebook?: string;
+  instagram?: string;
+  tiktok?: string;
+  x?: string;
+  youtube?: string;
+  linkedin?: string;
+  snapchat?: string;
+  pinterest?: string;
+  reddit?: string;
+  whatsapp?: string;
+  messenger?: string;
+  telegram?: string;
+  discord?: string;
+  wechat?: string;
+  tumblr?: string;
+  threads?: string;
+  quora?: string;
+  clubhouse?: string;
 }
 
-const API_ENDPOINT = 'https://n8n.srv1151765.hstgr.cloud/webhook/reel-copy';
+const API_ENDPOINT = 'https://n8n.srv1151765.hstgr.cloud/webhook/caption-maker';
 
-const Index = () => {
+const CaptionTranscriber = () => {
   const [isLoading, setIsLoading] = useState(false);
-  const [response, setResponse] = useState<ApiResponse | null>(null);
+  const [response, setResponse] = useState<SocialCaptions | null>(null);
 
   const handleSubmit = async (formData: FormData) => {
     setIsLoading(true);
@@ -44,13 +50,13 @@ const Index = () => {
       setResponse(data);
       toast({
         title: 'Success',
-        description: 'Video analyzed successfully!',
+        description: 'Captions generated successfully!',
       });
     } catch (error) {
       console.error('Upload error:', error);
       toast({
         title: 'Error',
-        description: error instanceof Error ? error.message : 'Failed to upload video. Please try again.',
+        description: error instanceof Error ? error.message : 'Failed to generate captions. Please try again.',
         variant: 'destructive',
       });
     } finally {
@@ -76,13 +82,13 @@ const Index = () => {
         {/* Header */}
         <div className="text-center mb-10">
           <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-primary/20 mb-4 glow-primary">
-            <Film className="w-8 h-8 text-primary" />
+            <MessageSquare className="w-8 h-8 text-primary" />
           </div>
           <h1 className="text-3xl md:text-4xl font-bold text-foreground mb-2">
-            Reel Content <span className="gradient-text">Paraphraser</span>
+            Caption <span className="gradient-text">Transcriber</span>
           </h1>
           <p className="text-muted-foreground max-w-md mx-auto">
-            Upload your video reel to extract transcripts and get AI-powered paraphrasing.
+            Generate platform-specific captions for your social media content.
           </p>
         </div>
 
@@ -90,20 +96,20 @@ const Index = () => {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           {/* Left Side - Input Form */}
           <div className="glass rounded-2xl p-6 md:p-8 shadow-card h-fit">
-            <VideoUploadForm onSubmit={handleSubmit} isLoading={isLoading} />
+            <CaptionUploadForm onSubmit={handleSubmit} isLoading={isLoading} />
           </div>
 
           {/* Right Side - Response Display */}
           <div className="h-fit">
             {response ? (
-              <ResponseDisplay response={response} />
+              <CaptionResponseDisplay captions={response} />
             ) : (
               <div className="glass rounded-2xl p-6 md:p-8 shadow-card flex flex-col items-center justify-center min-h-[300px] text-center">
                 <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mb-4">
-                  <Film className="w-8 h-8 text-muted-foreground" />
+                  <MessageSquare className="w-8 h-8 text-muted-foreground" />
                 </div>
                 <p className="text-muted-foreground">
-                  Upload a video to see the analysis results here
+                  Upload a video to generate platform-specific captions
                 </p>
               </div>
             )}
@@ -114,4 +120,4 @@ const Index = () => {
   );
 };
 
-export default Index;
+export default CaptionTranscriber;

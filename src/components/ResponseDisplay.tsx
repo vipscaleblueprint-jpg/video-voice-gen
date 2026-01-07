@@ -7,6 +7,8 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from '@/components/ui/collapsible';
+import { CaptionResponseDisplay } from '@/components/CaptionResponseDisplay';
+import type { SocialCaptions } from '@/pages/CaptionTranscriber';
 
 interface TimestampItem {
   text: string;
@@ -20,6 +22,7 @@ interface ApiResponse {
   paraphrased: string;
   hook?: string;
   caption?: string;
+  captions?: SocialCaptions;
   timestamps: TimestampItem[];
 }
 
@@ -146,6 +149,13 @@ export const ResponseDisplay = ({ response }: ResponseDisplayProps) => {
           content={response.caption}
           className="border-primary/20"
         />
+      )}
+
+      {/* Social Captions */}
+      {response.captions && Object.values(response.captions).some(v => v && v.trim()) && (
+        <div className="mt-6">
+          <CaptionResponseDisplay captions={response.captions} />
+        </div>
       )}
 
       {/* Timestamps */}
