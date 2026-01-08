@@ -24,6 +24,17 @@ interface ApiResponse {
   caption?: string;
   captions?: SocialCaptions;
   timestamps: TimestampItem[];
+  // Top-level platform captions (optional)
+  facebook?: string;
+  instagram?: string;
+  tiktok?: string;
+  x?: string;
+  youtube?: string;
+  linkedin?: string;
+  snapchat?: string;
+  pinterest?: string;
+  reddit?: string;
+  threads?: string;
 }
 
 interface ResponseDisplayProps {
@@ -97,6 +108,24 @@ const formatTime = (seconds: number) => {
 export const ResponseDisplay = ({ response }: ResponseDisplayProps) => {
   const [isScriptOpen, setIsScriptOpen] = useState(false);
 
+  // Build captions from either nested captions object or top-level platform fields
+  const socialCaptions: SocialCaptions = response.captions ?? {
+    facebook: response.facebook,
+    instagram: response.instagram,
+    tiktok: response.tiktok,
+    x: response.x,
+    youtube: response.youtube,
+    linkedin: response.linkedin,
+    snapchat: response.snapchat,
+    pinterest: response.pinterest,
+    reddit: response.reddit,
+    threads: response.threads,
+  };
+
+  const hasValidCaptions = Object.values(socialCaptions).some(
+    v => typeof v === 'string' && v.trim()
+  );
+
   return (
     <div className="space-y-4 animate-in fade-in-0 slide-in-from-bottom-4 duration-500">
       <div className="flex items-center gap-2 mb-6">
@@ -152,9 +181,9 @@ export const ResponseDisplay = ({ response }: ResponseDisplayProps) => {
       )}
 
       {/* Social Captions */}
-      {response.captions && Object.values(response.captions).some(v => v && v.trim()) && (
+      {hasValidCaptions && (
         <div className="mt-6">
-          <CaptionResponseDisplay captions={response.captions} />
+          <CaptionResponseDisplay captions={socialCaptions} />
         </div>
       )}
 
