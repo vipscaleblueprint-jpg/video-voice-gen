@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
-import { 
-  Loader2, AlertCircle, MessageSquare, ExternalLink, 
-  Facebook, Instagram, Youtube, Linkedin, Twitter, 
+import {
+  Loader2, AlertCircle, MessageSquare, ExternalLink,
+  Facebook, Instagram, Youtube, Linkedin, Twitter,
   Ghost, Pin, MessageCircle, AtSign, Music2, Sparkles,
   type LucideIcon
 } from 'lucide-react';
@@ -74,11 +74,11 @@ export const CaptionUploadForm = ({ onSubmit, isLoading }: CaptionUploadFormProp
   const [ctaOptions, setCtaOptions] = useState<CTAOption[]>([]);
   const [isLoadingCtas, setIsLoadingCtas] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  
+
   // Multi-platform selection with individual prompts
   const [selectedPlatforms, setSelectedPlatforms] = useState<string[]>([]);
   const [platformPrompts, setPlatformPrompts] = useState<Record<string, string>>({});
-  
+
   // Centralized prompt
   const [centralizedPrompt, setCentralizedPrompt] = useState('');
   const [useCentralizedPrompt, setUseCentralizedPrompt] = useState(false);
@@ -119,12 +119,12 @@ export const CaptionUploadForm = ({ onSubmit, isLoading }: CaptionUploadFormProp
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!caption.trim()) {
       setError('Please enter a caption.');
       return;
     }
-    
+
     if (!selectedCta.trim()) {
       setError('Please select or enter a CTA.');
       return;
@@ -143,12 +143,12 @@ export const CaptionUploadForm = ({ onSubmit, isLoading }: CaptionUploadFormProp
       language,
       platforms: selectedPlatforms,
     };
-    
+
     // Add centralized prompt if enabled
     if (useCentralizedPrompt && centralizedPrompt.trim()) {
       payload.centralizedPrompt = centralizedPrompt.trim();
     }
-    
+
     // Add platform-specific prompts (these override centralized if both exist)
     const prompts: Record<string, string> = {};
     selectedPlatforms.forEach(platform => {
@@ -186,8 +186,8 @@ export const CaptionUploadForm = ({ onSubmit, isLoading }: CaptionUploadFormProp
         <Label htmlFor="cta" className="text-muted-foreground">
           CTA (Call to Action) <span className="text-destructive">*</span>
         </Label>
-        <Select 
-          value={ctaOptions.some(opt => opt.cta === selectedCta) ? selectedCta : ''} 
+        <Select
+          value={ctaOptions.some(opt => opt.cta === selectedCta) ? selectedCta : ''}
           onValueChange={setSelectedCta}
           disabled={isLoadingCtas}
         >
@@ -202,18 +202,17 @@ export const CaptionUploadForm = ({ onSubmit, isLoading }: CaptionUploadFormProp
             ))}
           </SelectContent>
         </Select>
-        
+
         {/* Editable CTA */}
-        {selectedCta && (
-          <Textarea
-            value={selectedCta}
-            onChange={(e) => setSelectedCta(e.target.value)}
-            placeholder="Edit your CTA..."
-            rows={2}
-            className="bg-secondary border-border focus:border-primary focus:ring-primary/20 resize-y mt-2"
-          />
-        )}
-        
+        {/* Editable CTA */}
+        <Textarea
+          value={selectedCta}
+          onChange={(e) => setSelectedCta(e.target.value)}
+          placeholder="Select a CTA from above or type your own..."
+          rows={2}
+          className="bg-secondary border-border focus:border-primary focus:ring-primary/20 resize-y mt-2"
+        />
+
         <a
           href="https://docs.google.com/spreadsheets/d/1oQUbYqCJ-7A7S33459JycD2h60bb7Z8El1p4cTD5B_s/edit?gid=1974246146#gid=1974246146"
           target="_blank"
@@ -251,8 +250,8 @@ export const CaptionUploadForm = ({ onSubmit, isLoading }: CaptionUploadFormProp
           </div>
           <div className="flex items-center gap-2">
             <span className="text-xs text-muted-foreground">Apply to all</span>
-            <Switch 
-              checked={useCentralizedPrompt} 
+            <Switch
+              checked={useCentralizedPrompt}
               onCheckedChange={setUseCentralizedPrompt}
             />
           </div>
@@ -281,7 +280,7 @@ export const CaptionUploadForm = ({ onSubmit, isLoading }: CaptionUploadFormProp
         <p className="text-xs text-muted-foreground/70">
           Select platforms and optionally add individual prompts
         </p>
-        
+
         {/* Platform Pills */}
         <div className="flex flex-wrap gap-2">
           {SOCIAL_PLATFORMS.map((platform) => {
@@ -292,11 +291,10 @@ export const CaptionUploadForm = ({ onSubmit, isLoading }: CaptionUploadFormProp
                 key={platform.id}
                 type="button"
                 onClick={() => handlePlatformToggle(platform.id)}
-                className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium transition-all ${
-                  isSelected 
-                    ? 'bg-primary text-primary-foreground shadow-md' 
-                    : 'bg-secondary/70 text-muted-foreground hover:bg-secondary hover:text-foreground border border-border'
-                }`}
+                className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium transition-all ${isSelected
+                  ? 'bg-primary text-primary-foreground shadow-md'
+                  : 'bg-secondary/70 text-muted-foreground hover:bg-secondary hover:text-foreground border border-border'
+                  }`}
               >
                 <Icon className="w-3.5 h-3.5" />
                 {platform.name}
@@ -343,7 +341,7 @@ export const CaptionUploadForm = ({ onSubmit, isLoading }: CaptionUploadFormProp
       {/* Submit Button */}
       <Button
         type="submit"
-        disabled={isLoading || !caption.trim() || !selectedCta.trim() || selectedPlatforms.length === 0}
+        disabled={isLoading}
         className="w-full h-12 text-base font-semibold bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50 glow-primary transition-all"
       >
         {isLoading ? (

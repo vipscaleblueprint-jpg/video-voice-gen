@@ -70,6 +70,7 @@ const Index = () => {
         {/* Navigation */}
         <nav className="flex items-center gap-4 mb-8">
           <NavLink to="/">Reel Paraphraser</NavLink>
+          <NavLink to="/caption-transcriber">Caption Transcriber</NavLink>
         </nav>
 
         {/* Header */}

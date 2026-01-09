@@ -26,7 +26,7 @@ export interface SocialCaptions {
   clubhouse?: string;
 }
 
-const API_ENDPOINT = 'https://n8n.srv1151765.hstgr.cloud/webhook/caption-maker';
+const API_ENDPOINT = 'https://n8n.srv1151765.hstgr.cloud/webhook/caption-transcriber';
 
 const CaptionTranscriber = () => {
   const [isLoading, setIsLoading] = useState(false);
