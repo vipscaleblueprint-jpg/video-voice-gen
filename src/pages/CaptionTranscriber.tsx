@@ -1,29 +1,18 @@
 import { useState } from 'react';
 import { CaptionUploadForm, type CaptionFormPayload } from '@/components/CaptionUploadForm';
 import { CaptionResponseDisplay } from '@/components/CaptionResponseDisplay';
-import { MessageSquare } from 'lucide-react';
+import { MessageSquare, Loader2 } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { NavLink } from '@/components/NavLink';
 
+export interface CaptionData {
+  content: string;
+  hashtags: string;
+  title: string;
+}
+
 export interface SocialCaptions {
-  facebook?: string;
-  instagram?: string;
-  tiktok?: string;
-  x?: string;
-  youtube?: string;
-  linkedin?: string;
-  snapchat?: string;
-  pinterest?: string;
-  reddit?: string;
-  whatsapp?: string;
-  messenger?: string;
-  telegram?: string;
-  discord?: string;
-  wechat?: string;
-  tumblr?: string;
-  threads?: string;
-  quora?: string;
-  clubhouse?: string;
+  [key: string]: CaptionData;
 }
 
 const API_ENDPOINT = 'https://n8n.srv1151765.hstgr.cloud/webhook/caption-transcriber';
@@ -50,7 +39,12 @@ const CaptionTranscriber = () => {
       }
 
       const data = await res.json();
-      setResponse(data);
+      // Handle the case where the API returns an array (take the first item)
+      if (Array.isArray(data) && data.length > 0) {
+        setResponse(data[0]);
+      } else {
+        setResponse(data);
+      }
       toast({
         title: 'Success',
         description: 'Captions generated successfully!',
@@ -104,7 +98,13 @@ const CaptionTranscriber = () => {
 
           {/* Right Side - Response Display */}
           <div className="h-fit">
-            {response ? (
+            {isLoading ? (
+              <div className="glass rounded-2xl p-6 md:p-8 shadow-card flex flex-col items-center justify-center min-h-[300px] text-center">
+                <Loader2 className="w-12 h-12 text-primary animate-spin mb-4" />
+                <p className="text-muted-foreground font-medium">Generating captions...</p>
+                <p className="text-xs text-muted-foreground/70 mt-2">This may take a few moments</p>
+              </div>
+            ) : response ? (
               <CaptionResponseDisplay captions={response} />
             ) : (
               <div className="glass rounded-2xl p-6 md:p-8 shadow-card flex flex-col items-center justify-center min-h-[300px] text-center">
@@ -112,7 +112,7 @@ const CaptionTranscriber = () => {
                   <MessageSquare className="w-8 h-8 text-muted-foreground" />
                 </div>
                 <p className="text-muted-foreground">
-                  Upload a video to generate platform-specific captions
+                  Result Section
                 </p>
               </div>
             )}

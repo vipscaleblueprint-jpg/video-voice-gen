@@ -125,11 +125,6 @@ export const CaptionUploadForm = ({ onSubmit, isLoading }: CaptionUploadFormProp
       return;
     }
 
-    if (!selectedCta.trim()) {
-      setError('Please select or enter a CTA.');
-      return;
-    }
-
     if (selectedPlatforms.length === 0) {
       setError('Please select at least one platform.');
       return;
@@ -137,11 +132,17 @@ export const CaptionUploadForm = ({ onSubmit, isLoading }: CaptionUploadFormProp
 
     setError(null);
 
+    // Map IDs to Names for the payload
+    const platformNames = selectedPlatforms.map(id => {
+      const platform = SOCIAL_PLATFORMS.find(p => p.id === id);
+      return platform ? platform.name : id;
+    });
+
     const payload: CaptionFormPayload = {
       caption: caption.trim(),
       cta: selectedCta.trim(),
       language,
-      platforms: selectedPlatforms,
+      platforms: platformNames,
     };
 
     // Add centralized prompt if enabled
@@ -149,13 +150,17 @@ export const CaptionUploadForm = ({ onSubmit, isLoading }: CaptionUploadFormProp
       payload.centralizedPrompt = centralizedPrompt.trim();
     }
 
-    // Add platform-specific prompts (these override centralized if both exist)
+    // Add platform-specific prompts (using Names as keys)
     const prompts: Record<string, string> = {};
-    selectedPlatforms.forEach(platform => {
-      if (platformPrompts[platform]?.trim()) {
-        prompts[platform] = platformPrompts[platform].trim();
+    selectedPlatforms.forEach(platformId => {
+      const platform = SOCIAL_PLATFORMS.find(p => p.id === platformId);
+      const platformName = platform ? platform.name : platformId;
+
+      if (platformPrompts[platformId]?.trim()) {
+        prompts[platformName] = platformPrompts[platformId].trim();
       }
     });
+
     if (Object.keys(prompts).length > 0) {
       payload.prompts = prompts;
     }
@@ -184,7 +189,7 @@ export const CaptionUploadForm = ({ onSubmit, isLoading }: CaptionUploadFormProp
       {/* CTA Dropdown (Required) */}
       <div className="space-y-2">
         <Label htmlFor="cta" className="text-muted-foreground">
-          CTA (Call to Action) <span className="text-destructive">*</span>
+          CTA (Call to Action)
         </Label>
         <Select
           value={ctaOptions.some(opt => opt.cta === selectedCta) ? selectedCta : ''}

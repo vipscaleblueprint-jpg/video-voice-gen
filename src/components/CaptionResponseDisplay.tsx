@@ -2,10 +2,10 @@ import { Copy, Check } from 'lucide-react';
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { toast } from '@/hooks/use-toast';
-import type { SocialCaptions } from '@/pages/CaptionTranscriber';
+import type { SocialCaptions, CaptionData } from '@/pages/CaptionTranscriber';
 
-// Platform icons/labels mapping
-const PLATFORM_CONFIG: Record<keyof SocialCaptions, { label: string; color: string }> = {
+// Platform icons/labels mapping (lowercase keys)
+const PLATFORM_CONFIG: Record<string, { label: string; color: string }> = {
   facebook: { label: 'Facebook', color: 'bg-blue-600' },
   instagram: { label: 'Instagram', color: 'bg-gradient-to-r from-purple-500 via-pink-500 to-orange-500' },
   tiktok: { label: 'TikTok', color: 'bg-black' },
@@ -55,11 +55,17 @@ const CopyButton = ({ text }: { text: string }) => {
 export const CaptionResponseDisplay = ({ captions }: CaptionResponseDisplayProps) => {
   // Filter out empty/null/undefined captions and unknown platforms
   const validCaptions = Object.entries(captions).filter(
-    ([key, value]) => 
-      typeof value === 'string' && 
-      value.trim() !== '' && 
-      key in PLATFORM_CONFIG
-  ) as [keyof SocialCaptions, string][];
+    ([key, value]) => {
+      const platformKey = key.toLowerCase();
+      return (
+        value &&
+        typeof value === 'object' &&
+        value.content &&
+        value.content.trim() !== '' &&
+        platformKey in PLATFORM_CONFIG
+      );
+    }
+  ) as [string, CaptionData][];
 
   if (validCaptions.length === 0) {
     return (
@@ -74,23 +80,61 @@ export const CaptionResponseDisplay = ({ captions }: CaptionResponseDisplayProps
       <h2 className="text-xl font-semibold text-foreground mb-4">
         Generated Captions ({validCaptions.length})
       </h2>
-      
+
       <div className="space-y-4">
-        {validCaptions.map(([platform, caption]) => {
-          const config = PLATFORM_CONFIG[platform];
+        {validCaptions.map(([key, data]) => {
+          const platformKey = key.toLowerCase();
+          const config = PLATFORM_CONFIG[platformKey];
+
+          // Combine content for copy function
+          const fullText = [
+            data.title ? `Title: ${data.title}` : '',
+            data.content,
+            data.hashtags
+          ].filter(Boolean).join('\n\n');
+
           return (
             <div
-              key={platform}
+              key={key}
               className="bg-secondary/50 rounded-xl p-4 border border-border"
             >
-              <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center justify-between mb-3 border-b border-border/50 pb-2">
                 <div className="flex items-center gap-2">
                   <span className={`inline-block w-3 h-3 rounded-full ${config.color}`} />
                   <span className="font-medium text-foreground">{config.label}</span>
                 </div>
-                <CopyButton text={caption} />
+                <CopyButton text={fullText} />
               </div>
-              <p className="text-muted-foreground text-sm whitespace-pre-wrap">{caption}</p>
+
+              <div className="space-y-4">
+                {data.title && (
+                  <div className="relative group">
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Title</span>
+                      <CopyButton text={data.title} />
+                    </div>
+                    <p className="text-foreground font-medium bg-background/50 p-2 rounded-md">{data.title}</p>
+                  </div>
+                )}
+
+                <div className="relative group">
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Content</span>
+                    <CopyButton text={data.content} />
+                  </div>
+                  <p className="text-muted-foreground text-sm whitespace-pre-wrap bg-background/50 p-2 rounded-md">{data.content}</p>
+                </div>
+
+                {data.hashtags && (
+                  <div className="relative group">
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Hashtags</span>
+                      <CopyButton text={data.hashtags} />
+                    </div>
+                    <p className="text-primary text-sm font-medium bg-background/50 p-2 rounded-md">{data.hashtags}</p>
+                  </div>
+                )}
+              </div>
             </div>
           );
         })}
