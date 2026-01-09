@@ -1,10 +1,14 @@
 import { useState, useEffect } from 'react';
-import { Loader2, AlertCircle, MessageSquare, ExternalLink, Check } from 'lucide-react';
+import { 
+  Loader2, AlertCircle, MessageSquare, ExternalLink, 
+  Facebook, Instagram, Youtube, Linkedin, Twitter, 
+  Ghost, Pin, MessageCircle, AtSign, Music2,
+  type LucideIcon
+} from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-
 
 const CTA_ENDPOINT = 'https://n8n.srv1151765.hstgr.cloud/webhook/e5260e03-6ded-4448-ab29-52f88af0d35b';
 
@@ -31,17 +35,17 @@ const LANGUAGES = [
   'Malay',
 ];
 
-const SOCIAL_PLATFORMS = [
-  { id: 'facebook', name: 'Facebook' },
-  { id: 'instagram', name: 'Instagram' },
-  { id: 'tiktok', name: 'TikTok' },
-  { id: 'x', name: 'X (Twitter)' },
-  { id: 'youtube', name: 'YouTube' },
-  { id: 'linkedin', name: 'LinkedIn' },
-  { id: 'snapchat', name: 'Snapchat' },
-  { id: 'pinterest', name: 'Pinterest' },
-  { id: 'reddit', name: 'Reddit' },
-  { id: 'threads', name: 'Threads' },
+const SOCIAL_PLATFORMS: { id: string; name: string; icon: LucideIcon }[] = [
+  { id: 'facebook', name: 'Facebook', icon: Facebook },
+  { id: 'instagram', name: 'Instagram', icon: Instagram },
+  { id: 'tiktok', name: 'TikTok', icon: Music2 },
+  { id: 'x', name: 'X', icon: Twitter },
+  { id: 'youtube', name: 'YouTube', icon: Youtube },
+  { id: 'linkedin', name: 'LinkedIn', icon: Linkedin },
+  { id: 'snapchat', name: 'Snapchat', icon: Ghost },
+  { id: 'pinterest', name: 'Pinterest', icon: Pin },
+  { id: 'reddit', name: 'Reddit', icon: MessageCircle },
+  { id: 'threads', name: 'Threads', icon: AtSign },
 ];
 
 interface CTAOption {
@@ -227,50 +231,54 @@ export const CaptionUploadForm = ({ onSubmit, isLoading }: CaptionUploadFormProp
           Select platforms and add optional prompts for each
         </p>
         
-        <div className="space-y-3">
+        {/* Platform Pills */}
+        <div className="flex flex-wrap gap-2">
           {SOCIAL_PLATFORMS.map((platform) => {
             const isSelected = selectedPlatforms.includes(platform.id);
+            const Icon = platform.icon;
             return (
-              <div key={platform.id} className="space-y-2">
-                <div 
-                  className={`flex items-center gap-3 p-3 rounded-lg border transition-all cursor-pointer ${
-                    isSelected 
-                      ? 'bg-primary/10 border-primary/30' 
-                      : 'bg-secondary/50 border-border hover:border-primary/20'
-                  }`}
-                  onClick={() => handlePlatformToggle(platform.id)}
-                >
-                  <div 
-                    className={`w-4 h-4 rounded border-2 flex items-center justify-center transition-colors ${
-                      isSelected 
-                        ? 'bg-primary border-primary' 
-                        : 'border-muted-foreground/50'
-                    }`}
-                  >
-                    {isSelected && <Check className="w-3 h-3 text-primary-foreground" />}
-                  </div>
-                  <span className="flex-1 font-medium text-foreground">
-                    {platform.name}
-                  </span>
-                </div>
-                
-                {/* Prompt textarea for selected platform */}
-                {isSelected && (
-                  <div className="ml-6 animate-in fade-in-0 slide-in-from-top-2 duration-200">
-                    <Textarea
-                      value={platformPrompts[platform.id] || ''}
-                      onChange={(e) => handlePromptChange(platform.id, e.target.value)}
-                      placeholder={`Optional prompt for ${platform.name}...`}
-                      rows={2}
-                      className="bg-secondary border-border focus:border-primary focus:ring-primary/20 resize-y text-sm"
-                      onClick={(e) => e.stopPropagation()}
-                    />
-                  </div>
-                )}
-              </div>
+              <button
+                key={platform.id}
+                type="button"
+                onClick={() => handlePlatformToggle(platform.id)}
+                className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium transition-all ${
+                  isSelected 
+                    ? 'bg-primary text-primary-foreground shadow-md' 
+                    : 'bg-secondary/70 text-muted-foreground hover:bg-secondary hover:text-foreground border border-border'
+                }`}
+              >
+                <Icon className="w-3.5 h-3.5" />
+                {platform.name}
+              </button>
             );
           })}
         </div>
+
+        {/* Prompts for selected platforms */}
+        {selectedPlatforms.length > 0 && (
+          <div className="space-y-3 mt-4">
+            {selectedPlatforms.map((platformId) => {
+              const platform = SOCIAL_PLATFORMS.find(p => p.id === platformId);
+              if (!platform) return null;
+              const Icon = platform.icon;
+              return (
+                <div key={platformId} className="animate-in fade-in-0 slide-in-from-top-2 duration-200">
+                  <div className="flex items-center gap-2 mb-1.5">
+                    <Icon className="w-4 h-4 text-primary" />
+                    <span className="text-sm font-medium text-foreground">{platform.name}</span>
+                  </div>
+                  <Textarea
+                    value={platformPrompts[platformId] || ''}
+                    onChange={(e) => handlePromptChange(platformId, e.target.value)}
+                    placeholder={`Optional prompt for ${platform.name}...`}
+                    rows={2}
+                    className="bg-secondary border-border focus:border-primary focus:ring-primary/20 resize-y text-sm"
+                  />
+                </div>
+              );
+            })}
+          </div>
+        )}
       </div>
 
       {/* Error Display */}
