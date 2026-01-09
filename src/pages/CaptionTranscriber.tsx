@@ -74,6 +74,7 @@ const CaptionTranscriber = () => {
         <nav className="flex items-center gap-4 mb-8">
           <NavLink to="/">Reel Paraphraser</NavLink>
           <NavLink to="/caption-transcriber">Caption Transcriber</NavLink>
+          <NavLink to="/audio-tags">Audio Tags</NavLink>
         </nav>
 
         {/* Header */}
