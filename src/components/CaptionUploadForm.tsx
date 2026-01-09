@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react';
-import { Loader2, AlertCircle, MessageSquare, ExternalLink } from 'lucide-react';
+import { Loader2, AlertCircle, MessageSquare, ExternalLink, Check } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Checkbox } from '@/components/ui/checkbox';
 
 const CTA_ENDPOINT = 'https://n8n.srv1151765.hstgr.cloud/webhook/e5260e03-6ded-4448-ab29-52f88af0d35b';
 
@@ -30,6 +31,19 @@ const LANGUAGES = [
   'Malay',
 ];
 
+const SOCIAL_PLATFORMS = [
+  { id: 'facebook', name: 'Facebook' },
+  { id: 'instagram', name: 'Instagram' },
+  { id: 'tiktok', name: 'TikTok' },
+  { id: 'x', name: 'X (Twitter)' },
+  { id: 'youtube', name: 'YouTube' },
+  { id: 'linkedin', name: 'LinkedIn' },
+  { id: 'snapchat', name: 'Snapchat' },
+  { id: 'pinterest', name: 'Pinterest' },
+  { id: 'reddit', name: 'Reddit' },
+  { id: 'threads', name: 'Threads' },
+];
+
 interface CTAOption {
   cta: string;
 }
@@ -41,12 +55,15 @@ interface CaptionUploadFormProps {
 
 export const CaptionUploadForm = ({ onSubmit, isLoading }: CaptionUploadFormProps) => {
   const [caption, setCaption] = useState('');
-  const [prompt, setPrompt] = useState('');
   const [language, setLanguage] = useState('English');
   const [selectedCta, setSelectedCta] = useState('');
   const [ctaOptions, setCtaOptions] = useState<CTAOption[]>([]);
   const [isLoadingCtas, setIsLoadingCtas] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  
+  // Multi-platform selection with individual prompts
+  const [selectedPlatforms, setSelectedPlatforms] = useState<string[]>([]);
+  const [platformPrompts, setPlatformPrompts] = useState<Record<string, string>>({});
 
   // Fetch CTA options
   useEffect(() => {
@@ -66,6 +83,22 @@ export const CaptionUploadForm = ({ onSubmit, isLoading }: CaptionUploadFormProp
     fetchCtas();
   }, []);
 
+  const handlePlatformToggle = (platformId: string) => {
+    setSelectedPlatforms(prev => {
+      if (prev.includes(platformId)) {
+        return prev.filter(p => p !== platformId);
+      }
+      return [...prev, platformId];
+    });
+  };
+
+  const handlePromptChange = (platformId: string, value: string) => {
+    setPlatformPrompts(prev => ({
+      ...prev,
+      [platformId]: value,
+    }));
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -79,14 +112,28 @@ export const CaptionUploadForm = ({ onSubmit, isLoading }: CaptionUploadFormProp
       return;
     }
 
+    if (selectedPlatforms.length === 0) {
+      setError('Please select at least one platform.');
+      return;
+    }
+
     setError(null);
 
     const formData = new FormData();
     formData.append('caption', caption.trim());
     formData.append('cta', selectedCta.trim());
     formData.append('language', language);
-    if (prompt.trim()) {
-      formData.append('prompt', prompt.trim());
+    formData.append('platforms', JSON.stringify(selectedPlatforms));
+    
+    // Add platform-specific prompts
+    const prompts: Record<string, string> = {};
+    selectedPlatforms.forEach(platform => {
+      if (platformPrompts[platform]?.trim()) {
+        prompts[platform] = platformPrompts[platform].trim();
+      }
+    });
+    if (Object.keys(prompts).length > 0) {
+      formData.append('prompts', JSON.stringify(prompts));
     }
 
     await onSubmit(formData);
@@ -171,19 +218,62 @@ export const CaptionUploadForm = ({ onSubmit, isLoading }: CaptionUploadFormProp
         </Select>
       </div>
 
-      {/* Prompt (Optional) */}
-      <div className="space-y-2">
-        <Label htmlFor="prompt" className="text-muted-foreground">
-          Prompt <span className="text-xs text-muted-foreground/70">(Optional)</span>
+      {/* Platform Selection with Individual Prompts */}
+      <div className="space-y-3">
+        <Label className="text-muted-foreground">
+          Platforms <span className="text-destructive">*</span>
         </Label>
-        <Textarea
-          id="prompt"
-          value={prompt}
-          onChange={(e) => setPrompt(e.target.value)}
-          placeholder="Add any custom instructions for generating captions..."
-          rows={3}
-          className="bg-secondary border-border focus:border-primary focus:ring-primary/20 resize-y"
-        />
+        <p className="text-xs text-muted-foreground/70">
+          Select platforms and add optional prompts for each
+        </p>
+        
+        <div className="space-y-3">
+          {SOCIAL_PLATFORMS.map((platform) => {
+            const isSelected = selectedPlatforms.includes(platform.id);
+            return (
+              <div key={platform.id} className="space-y-2">
+                <div 
+                  className={`flex items-center gap-3 p-3 rounded-lg border transition-all cursor-pointer ${
+                    isSelected 
+                      ? 'bg-primary/10 border-primary/30' 
+                      : 'bg-secondary/50 border-border hover:border-primary/20'
+                  }`}
+                  onClick={() => handlePlatformToggle(platform.id)}
+                >
+                  <Checkbox
+                    id={platform.id}
+                    checked={isSelected}
+                    onCheckedChange={() => handlePlatformToggle(platform.id)}
+                    className="pointer-events-none"
+                  />
+                  <Label 
+                    htmlFor={platform.id} 
+                    className="flex-1 cursor-pointer font-medium text-foreground"
+                  >
+                    {platform.name}
+                  </Label>
+                  {isSelected && (
+                    <Check className="w-4 h-4 text-primary" />
+                  )}
+                </div>
+                
+                {/* Prompt textarea for selected platform */}
+                {isSelected && (
+                  <div className="ml-6 animate-in fade-in-0 slide-in-from-top-2 duration-200">
+                    <Textarea
+                      value={platformPrompts[platform.id] || ''}
+                      onChange={(e) => handlePromptChange(platform.id, e.target.value)}
+                      placeholder={`Optional prompt for ${platform.name}...`}
+                      rows={2}
+                      className="bg-secondary border-border focus:border-primary focus:ring-primary/20 resize-y text-sm"
+                      onClick={(e) => e.stopPropagation()}
+                    />
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
       </div>
 
       {/* Error Display */}
@@ -197,7 +287,7 @@ export const CaptionUploadForm = ({ onSubmit, isLoading }: CaptionUploadFormProp
       {/* Submit Button */}
       <Button
         type="submit"
-        disabled={isLoading || !caption.trim() || !selectedCta.trim()}
+        disabled={isLoading || !caption.trim() || !selectedCta.trim() || selectedPlatforms.length === 0}
         className="w-full h-12 text-base font-semibold bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50 glow-primary transition-all"
       >
         {isLoading ? (
