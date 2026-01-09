@@ -126,7 +126,7 @@ export const CaptionUploadForm = ({ onSubmit, isLoading }: CaptionUploadFormProp
     }
 
     if (selectedPlatforms.length === 0) {
-      setError('Please select at least one platform.');
+      setError('Please select at least 1 platform.');
       return;
     }
 
