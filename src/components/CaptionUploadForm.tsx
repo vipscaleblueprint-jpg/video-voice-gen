@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Checkbox } from '@/components/ui/checkbox';
+
 
 const CTA_ENDPOINT = 'https://n8n.srv1151765.hstgr.cloud/webhook/e5260e03-6ded-4448-ab29-52f88af0d35b';
 
@@ -240,21 +240,18 @@ export const CaptionUploadForm = ({ onSubmit, isLoading }: CaptionUploadFormProp
                   }`}
                   onClick={() => handlePlatformToggle(platform.id)}
                 >
-                  <Checkbox
-                    id={platform.id}
-                    checked={isSelected}
-                    onCheckedChange={() => handlePlatformToggle(platform.id)}
-                    className="pointer-events-none"
-                  />
-                  <Label 
-                    htmlFor={platform.id} 
-                    className="flex-1 cursor-pointer font-medium text-foreground"
+                  <div 
+                    className={`w-4 h-4 rounded border-2 flex items-center justify-center transition-colors ${
+                      isSelected 
+                        ? 'bg-primary border-primary' 
+                        : 'border-muted-foreground/50'
+                    }`}
                   >
+                    {isSelected && <Check className="w-3 h-3 text-primary-foreground" />}
+                  </div>
+                  <span className="flex-1 font-medium text-foreground">
                     {platform.name}
-                  </Label>
-                  {isSelected && (
-                    <Check className="w-4 h-4 text-primary" />
-                  )}
+                  </span>
                 </div>
                 
                 {/* Prompt textarea for selected platform */}
