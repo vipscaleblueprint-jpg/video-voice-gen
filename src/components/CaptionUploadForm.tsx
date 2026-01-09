@@ -53,8 +53,17 @@ interface CTAOption {
   cta: string;
 }
 
+export interface CaptionFormPayload {
+  caption: string;
+  cta: string;
+  language: string;
+  platforms: string[];
+  centralizedPrompt?: string;
+  prompts?: Record<string, string>;
+}
+
 interface CaptionUploadFormProps {
-  onSubmit: (formData: FormData) => Promise<void>;
+  onSubmit: (payload: CaptionFormPayload) => Promise<void>;
   isLoading: boolean;
 }
 
@@ -128,15 +137,16 @@ export const CaptionUploadForm = ({ onSubmit, isLoading }: CaptionUploadFormProp
 
     setError(null);
 
-    const formData = new FormData();
-    formData.append('caption', caption.trim());
-    formData.append('cta', selectedCta.trim());
-    formData.append('language', language);
-    formData.append('platforms', JSON.stringify(selectedPlatforms));
+    const payload: CaptionFormPayload = {
+      caption: caption.trim(),
+      cta: selectedCta.trim(),
+      language,
+      platforms: selectedPlatforms,
+    };
     
     // Add centralized prompt if enabled
     if (useCentralizedPrompt && centralizedPrompt.trim()) {
-      formData.append('centralizedPrompt', centralizedPrompt.trim());
+      payload.centralizedPrompt = centralizedPrompt.trim();
     }
     
     // Add platform-specific prompts (these override centralized if both exist)
@@ -147,10 +157,10 @@ export const CaptionUploadForm = ({ onSubmit, isLoading }: CaptionUploadFormProp
       }
     });
     if (Object.keys(prompts).length > 0) {
-      formData.append('prompts', JSON.stringify(prompts));
+      payload.prompts = prompts;
     }
 
-    await onSubmit(formData);
+    await onSubmit(payload);
   };
 
   return (
