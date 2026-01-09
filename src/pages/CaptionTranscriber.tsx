@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { CaptionUploadForm } from '@/components/CaptionUploadForm';
+import { CaptionUploadForm, type CaptionFormPayload } from '@/components/CaptionUploadForm';
 import { CaptionResponseDisplay } from '@/components/CaptionResponseDisplay';
 import { MessageSquare } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
@@ -32,14 +32,17 @@ const CaptionTranscriber = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [response, setResponse] = useState<SocialCaptions | null>(null);
 
-  const handleSubmit = async (formData: FormData) => {
+  const handleSubmit = async (payload: CaptionFormPayload) => {
     setIsLoading(true);
     setResponse(null);
 
     try {
       const res = await fetch(API_ENDPOINT, {
         method: 'POST',
-        body: formData,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload),
       });
 
       if (!res.ok) {
