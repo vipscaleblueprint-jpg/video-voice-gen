@@ -2,9 +2,10 @@ import { useState, useEffect } from 'react';
 import { 
   Loader2, AlertCircle, MessageSquare, ExternalLink, 
   Facebook, Instagram, Youtube, Linkedin, Twitter, 
-  Ghost, Pin, MessageCircle, AtSign, Music2,
+  Ghost, Pin, MessageCircle, AtSign, Music2, Sparkles,
   type LucideIcon
 } from 'lucide-react';
+import { Switch } from '@/components/ui/switch';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
@@ -68,6 +69,10 @@ export const CaptionUploadForm = ({ onSubmit, isLoading }: CaptionUploadFormProp
   // Multi-platform selection with individual prompts
   const [selectedPlatforms, setSelectedPlatforms] = useState<string[]>([]);
   const [platformPrompts, setPlatformPrompts] = useState<Record<string, string>>({});
+  
+  // Centralized prompt
+  const [centralizedPrompt, setCentralizedPrompt] = useState('');
+  const [useCentralizedPrompt, setUseCentralizedPrompt] = useState(false);
 
   // Fetch CTA options
   useEffect(() => {
@@ -129,7 +134,12 @@ export const CaptionUploadForm = ({ onSubmit, isLoading }: CaptionUploadFormProp
     formData.append('language', language);
     formData.append('platforms', JSON.stringify(selectedPlatforms));
     
-    // Add platform-specific prompts
+    // Add centralized prompt if enabled
+    if (useCentralizedPrompt && centralizedPrompt.trim()) {
+      formData.append('centralizedPrompt', centralizedPrompt.trim());
+    }
+    
+    // Add platform-specific prompts (these override centralized if both exist)
     const prompts: Record<string, string> = {};
     selectedPlatforms.forEach(platform => {
       if (platformPrompts[platform]?.trim()) {
@@ -222,13 +232,44 @@ export const CaptionUploadForm = ({ onSubmit, isLoading }: CaptionUploadFormProp
         </Select>
       </div>
 
+      {/* Centralized Prompt */}
+      <div className="space-y-3">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Sparkles className="w-4 h-4 text-primary" />
+            <Label className="text-muted-foreground">Centralized Prompt</Label>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-muted-foreground">Apply to all</span>
+            <Switch 
+              checked={useCentralizedPrompt} 
+              onCheckedChange={setUseCentralizedPrompt}
+            />
+          </div>
+        </div>
+        {useCentralizedPrompt && (
+          <div className="animate-in fade-in-0 slide-in-from-top-2 duration-200">
+            <Textarea
+              value={centralizedPrompt}
+              onChange={(e) => setCentralizedPrompt(e.target.value)}
+              placeholder="Enter a prompt that will apply to all selected platforms..."
+              rows={3}
+              className="bg-secondary border-border focus:border-primary focus:ring-primary/20 resize-y"
+            />
+            <p className="text-xs text-muted-foreground/70 mt-1">
+              Individual platform prompts will override this for specific platforms
+            </p>
+          </div>
+        )}
+      </div>
+
       {/* Platform Selection with Individual Prompts */}
       <div className="space-y-3">
         <Label className="text-muted-foreground">
           Platforms <span className="text-destructive">*</span>
         </Label>
         <p className="text-xs text-muted-foreground/70">
-          Select platforms and add optional prompts for each
+          Select platforms and optionally add individual prompts
         </p>
         
         {/* Platform Pills */}
