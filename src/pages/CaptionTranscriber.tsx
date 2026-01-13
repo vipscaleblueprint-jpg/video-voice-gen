@@ -73,7 +73,7 @@ const CaptionTranscriber = () => {
         {/* Navigation */}
         <nav className="flex items-center gap-4 mb-8">
           <NavLink to="/">Reel Paraphraser</NavLink>
-          <NavLink to="/caption-transcriber">Caption Transcriber</NavLink>
+          <NavLink to="/caption-transcriber">Caption Generator</NavLink>
           <NavLink to="/audio-tags">Audio Tags</NavLink>
         </nav>
 
@@ -83,7 +83,7 @@ const CaptionTranscriber = () => {
             <MessageSquare className="w-8 h-8 text-primary" />
           </div>
           <h1 className="text-3xl md:text-4xl font-bold text-foreground mb-2">
-            Caption <span className="gradient-text">Transcriber</span>
+            Caption <span className="gradient-text">Generator</span>
           </h1>
           <p className="text-muted-foreground max-w-md mx-auto">
             Generate platform-specific captions for your social media content.
