@@ -83,7 +83,7 @@ const CaptionTranscriber = () => {
             <MessageSquare className="w-8 h-8 text-primary" />
           </div>
           <h1 className="text-3xl md:text-4xl font-bold text-foreground mb-2">
-            Caption <span className="gradient-text">Transcriber</span>
+            Caption <span className="gradient-text">Generator</span>
           </h1>
           <p className="text-muted-foreground max-w-md mx-auto">
             Generate platform-specific captions for your social media content.
