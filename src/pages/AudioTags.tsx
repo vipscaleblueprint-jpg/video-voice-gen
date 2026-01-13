@@ -104,7 +104,7 @@ const AudioTags = () => {
                 {/* Navigation */}
                 <nav className="flex items-center gap-4 mb-8">
                     <NavLink to="/">Reel Paraphraser</NavLink>
-                    <NavLink to="/caption-transcriber">Caption generator</NavLink>
+                    <NavLink to="/caption-transcriber">Caption Generator</NavLink>
                     <NavLink to="/audio-tags">Audio Tags</NavLink>
                 </nav>
 
