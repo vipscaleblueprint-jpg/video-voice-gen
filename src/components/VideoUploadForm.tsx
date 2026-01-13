@@ -1,5 +1,5 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
-import { Upload, Film, X, Loader2, AlertCircle } from 'lucide-react';
+import { Upload, Film, X, Loader2, AlertCircle, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
@@ -40,16 +40,19 @@ interface CtaOption {
 
 const PROMPTS_API = 'https://n8n.srv1151765.hstgr.cloud/webhook/32117416-351b-4703-8ffb-931dec69efa4';
 const CTA_API = 'https://n8n.srv1151765.hstgr.cloud/webhook/e5260e03-6ded-4448-ab29-52f88af0d35b';
+const GENERATE_PERSONA_API = 'https://n8n.srv1151765.hstgr.cloud/webhook/generate-persona';
 
 interface VideoUploadFormProps {
   onSubmit: (formData: FormData) => Promise<void>;
+  onPersonaGenerated: (personaText: string) => void;
+  paraphrasedText?: string;
   isLoading: boolean;
 }
 
 const MAX_FILE_SIZE_MB = 100;
 const ACCEPTED_FORMATS = ['video/mp4', 'video/quicktime'];
 
-export const VideoUploadForm = ({ onSubmit, isLoading }: VideoUploadFormProps) => {
+export const VideoUploadForm = ({ onSubmit, onPersonaGenerated, paraphrasedText, isLoading }: VideoUploadFormProps) => {
   const [file, setFile] = useState<File | null>(null);
   const [videoPreviewUrl, setVideoPreviewUrl] = useState<string | null>(null);
   const [language, setLanguage] = useState('English');
@@ -64,6 +67,8 @@ export const VideoUploadForm = ({ onSubmit, isLoading }: VideoUploadFormProps) =
   const [ctaLoading, setCtaLoading] = useState(true);
   const [selectedCta, setSelectedCta] = useState('');
   const [caption, setCaption] = useState('');
+  const [personaInput, setPersonaInput] = useState('');
+  const [isGeneratingPersona, setIsGeneratingPersona] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
 
@@ -142,6 +147,51 @@ export const VideoUploadForm = ({ onSubmit, isLoading }: VideoUploadFormProps) =
     if (droppedFile) handleFile(droppedFile);
   }, [handleFile]);
 
+  const handleGeneratePersona = async () => {
+    setIsGeneratingPersona(true);
+    setError(null);
+    try {
+      const res = await fetch(GENERATE_PERSONA_API, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          persona_input: personaInput,
+          paraphrased: paraphrasedText || ''
+        })
+      });
+
+      if (!res.ok) throw new Error('Failed to generate persona');
+
+      const data = await res.json();
+
+      // Parse array response format: [{"output": "..."}]
+      let generatedText = '';
+      if (Array.isArray(data) && data.length > 0 && data[0].output) {
+        generatedText = data[0].output;
+      } else if (data.output) {
+        generatedText = data.output;
+      } else if (data.persona_line) {
+        generatedText = data.persona_line;
+      } else if (data.text) {
+        generatedText = data.text;
+      } else if (typeof data === 'string') {
+        generatedText = data;
+      }
+
+      if (generatedText) {
+        setPersonaInput(generatedText);
+        onPersonaGenerated(generatedText);
+      } else {
+        throw new Error('Invalid response format');
+      }
+    } catch (err) {
+      console.error('Persona generation error:', err);
+      setError('Failed to generate persona. Please try again.');
+    } finally {
+      setIsGeneratingPersona(false);
+    }
+  };
+
   const handleDragOver = useCallback((e: React.DragEvent) => {
     e.preventDefault();
     setIsDragging(true);
@@ -171,6 +221,9 @@ export const VideoUploadForm = ({ onSubmit, isLoading }: VideoUploadFormProps) =
     formData.append('cta', selectedCta);
     if (caption.trim()) {
       formData.append('caption', caption);
+    }
+    if (personaInput.trim()) {
+      formData.append('persona_input', personaInput);
     }
 
     await onSubmit(formData);
@@ -203,7 +256,7 @@ export const VideoUploadForm = ({ onSubmit, isLoading }: VideoUploadFormProps) =
           onChange={(e) => e.target.files?.[0] && handleFile(e.target.files[0])}
           className="hidden"
         />
-        
+
         <div className="flex flex-col items-center gap-4 text-center">
           {file && videoPreviewUrl ? (
             <>
@@ -296,10 +349,10 @@ export const VideoUploadForm = ({ onSubmit, isLoading }: VideoUploadFormProps) =
         <Label className="text-muted-foreground">
           Prompt <span className="text-destructive">*</span>
         </Label>
-        
+
         {/* Prompt Template Dropdown */}
-        <Select 
-          value={selectedPromptTemplate} 
+        <Select
+          value={selectedPromptTemplate}
           onValueChange={(value) => {
             setSelectedPromptTemplate(value);
             setPrompt(value);
@@ -369,8 +422,8 @@ export const VideoUploadForm = ({ onSubmit, isLoading }: VideoUploadFormProps) =
       {/* CTA Dropdown */}
       <div className="space-y-3">
         <Label htmlFor="cta" className="text-muted-foreground">CTA (Call to Action)</Label>
-        <Select 
-          value={ctaOptions.find(opt => opt.cta === selectedCta)?.cta || ''} 
+        <Select
+          value={ctaOptions.find(opt => opt.cta === selectedCta)?.cta || ''}
           onValueChange={setSelectedCta}
         >
           <SelectTrigger className="bg-secondary border-border focus:border-primary focus:ring-primary/20">
@@ -390,7 +443,7 @@ export const VideoUploadForm = ({ onSubmit, isLoading }: VideoUploadFormProps) =
             )}
           </SelectContent>
         </Select>
-        
+
         {/* Editable CTA Textarea */}
         <Textarea
           id="cta"
@@ -420,6 +473,34 @@ export const VideoUploadForm = ({ onSubmit, isLoading }: VideoUploadFormProps) =
           </>
         )}
       </Button>
+
+      {/* Persona Input */}
+      <div className="space-y-2">
+        <Label htmlFor="personaInput" className="text-muted-foreground">
+          Persona Input <span className="text-xs text-muted-foreground/70">(Who you help & Outcome)</span>
+        </Label>
+        <Textarea
+          id="personaInput"
+          value={personaInput}
+          onChange={(e) => setPersonaInput(e.target.value)}
+          placeholder="e.g. I am Jenesia Red, a fractional CMO who helps creators with AI content and funnels."
+          rows={3}
+          className="bg-secondary border-border focus:border-primary focus:ring-primary/20 resize-y"
+        />
+        <Button
+          type="button"
+          onClick={handleGeneratePersona}
+          disabled={isGeneratingPersona || !paraphrasedText}
+          className="w-full h-12 text-base font-semibold bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50 glow-primary transition-all"
+        >
+          {isGeneratingPersona ? (
+            <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+          ) : (
+            <Sparkles className="w-5 h-5 mr-2" />
+          )}
+          Generate Persona
+        </Button>
+      </div>
     </form>
   );
 };

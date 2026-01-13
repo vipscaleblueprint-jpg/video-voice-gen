@@ -7,13 +7,17 @@ import { NavLink } from '@/components/NavLink';
 import type { SocialCaptions } from '@/pages/CaptionTranscriber';
 
 interface ApiResponse {
-  original: string;
-  language_code: string;
-  paraphrased: string;
+  original?: string;
+  language_code?: string;
+  paraphrased?: string;
+  final_script?: string;
+  persona_line?: string;
+  bridge_line?: string;
+  credibility_line?: string;
   hook?: string;
   caption?: string;
   captions?: SocialCaptions;
-  timestamps: Array<{
+  timestamps?: Array<{
     text: string;
     start: number;
     end: number;
@@ -58,6 +62,14 @@ const Index = () => {
     }
   };
 
+  const handlePersonaGenerated = (personaText: string) => {
+    // Keep existing results and add the generated persona
+    setResponse(prev => ({
+      ...prev,
+      persona_line: personaText
+    }));
+  };
+
   return (
     <div className="min-h-screen bg-background relative overflow-hidden">
       {/* Background Effects */}
@@ -91,7 +103,12 @@ const Index = () => {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           {/* Left Side - Input Form */}
           <div className="glass rounded-2xl p-6 md:p-8 shadow-card h-fit">
-            <VideoUploadForm onSubmit={handleSubmit} isLoading={isLoading} />
+            <VideoUploadForm
+              onSubmit={handleSubmit}
+              onPersonaGenerated={handlePersonaGenerated}
+              paraphrasedText={response?.paraphrased}
+              isLoading={isLoading}
+            />
           </div>
 
           {/* Right Side - Response Display */}

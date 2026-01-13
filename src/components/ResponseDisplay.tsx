@@ -17,13 +17,17 @@ interface TimestampItem {
 }
 
 interface ApiResponse {
-  original: string;
-  language_code: string;
-  paraphrased: string;
+  original?: string;
+  language_code?: string;
+  paraphrased?: string;
+  final_script?: string;
+  persona_line?: string;
+  bridge_line?: string;
+  credibility_line?: string;
   hook?: string;
   caption?: string;
   captions?: SocialCaptions;
-  timestamps: TimestampItem[];
+  timestamps?: TimestampItem[];
   // Top-level platform captions (optional)
   facebook?: string;
   instagram?: string;
@@ -109,21 +113,32 @@ export const ResponseDisplay = ({ response }: ResponseDisplayProps) => {
   const [isScriptOpen, setIsScriptOpen] = useState(false);
 
   // Build captions from either nested captions object or top-level platform fields
-  const socialCaptions: SocialCaptions = response.captions ?? {
-    facebook: response.facebook,
-    instagram: response.instagram,
-    tiktok: response.tiktok,
-    x: response.x,
-    youtube: response.youtube,
-    linkedin: response.linkedin,
-    snapchat: response.snapchat,
-    pinterest: response.pinterest,
-    reddit: response.reddit,
-    threads: response.threads,
+  const socialCaptions: SocialCaptions = { ...response.captions };
+
+  // Helper to convert legacy string captions to CaptionData structure
+  const addPlatformCaption = (platform: string, content?: string) => {
+    if (content && !socialCaptions[platform]) {
+      socialCaptions[platform] = {
+        content: content,
+        title: '',
+        hashtags: ''
+      };
+    }
   };
 
+  addPlatformCaption('facebook', response.facebook);
+  addPlatformCaption('instagram', response.instagram);
+  addPlatformCaption('tiktok', response.tiktok);
+  addPlatformCaption('x', response.x);
+  addPlatformCaption('youtube', response.youtube);
+  addPlatformCaption('linkedin', response.linkedin);
+  addPlatformCaption('snapchat', response.snapchat);
+  addPlatformCaption('pinterest', response.pinterest);
+  addPlatformCaption('reddit', response.reddit);
+  addPlatformCaption('threads', response.threads);
+
   const hasValidCaptions = Object.values(socialCaptions).some(
-    v => typeof v === 'string' && v.trim()
+    v => v && typeof v === 'object' && 'content' in v && v.content && v.content.trim()
   );
 
   return (
@@ -137,28 +152,45 @@ export const ResponseDisplay = ({ response }: ResponseDisplayProps) => {
       </div>
 
       {/* Language Badge */}
-      <div className="flex items-center gap-2">
-        <Globe className="w-4 h-4 text-primary" />
-        <span className="text-sm text-muted-foreground">Detected Language:</span>
-        <span className="px-3 py-1 text-sm font-medium rounded-full bg-primary/20 text-primary">
-          {response.language_code.toUpperCase()}
-        </span>
-      </div>
+      {response.language_code && (
+        <div className="flex items-center gap-2">
+          <Globe className="w-4 h-4 text-primary" />
+          <span className="text-sm text-muted-foreground">Detected Language:</span>
+          <span className="px-3 py-1 text-sm font-medium rounded-full bg-primary/20 text-primary">
+            {response.language_code.toUpperCase()}
+          </span>
+        </div>
+      )}
 
       {/* Original Transcript */}
-      <ResponseCard
-        icon={FileText}
-        title="Original Transcript"
-        content={response.original}
-      />
+      {response.original && (
+        <ResponseCard
+          icon={FileText}
+          title="Original Transcript"
+          content={response.original}
+        />
+      )}
+
+      {/* Final Script (Most Important) */}
+      {response.final_script && (
+        <ResponseCard
+          icon={Sparkles}
+          title="Final Script"
+          content={response.final_script}
+          className="border-primary bg-primary/5"
+          badge="Ready to Use"
+        />
+      )}
 
       {/* Paraphrased Version */}
-      <ResponseCard
-        icon={Sparkles}
-        title="Paraphrased Version"
-        content={response.paraphrased}
-        className="border-primary/20"
-      />
+      {response.paraphrased && (
+        <ResponseCard
+          icon={Sparkles}
+          title="Paraphrased Version"
+          content={response.paraphrased}
+          className="border-primary/20"
+        />
+      )}
 
       {/* Hook */}
       {response.hook && (
@@ -177,6 +209,16 @@ export const ResponseDisplay = ({ response }: ResponseDisplayProps) => {
           title="Caption"
           content={response.caption}
           className="border-primary/20"
+        />
+      )}
+
+      {/* Generated Persona (Displayed after all analysis results) */}
+      {response.persona_line && (
+        <ResponseCard
+          icon={Sparkles}
+          title="Generated Persona"
+          content={response.persona_line}
+          className="border-primary/20 bg-primary/5"
         />
       )}
 
@@ -203,10 +245,10 @@ export const ResponseDisplay = ({ response }: ResponseDisplayProps) => {
                   </span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <CopyButton 
+                  <CopyButton
                     text={response.timestamps
                       .map(seg => `${formatTime(seg.start)}–${formatTime(seg.end)}\n"${seg.text.trim()}"`)
-                      .join('\n\n')} 
+                      .join('\n\n')}
                   />
                   <ChevronDown
                     className={cn(
@@ -220,7 +262,7 @@ export const ResponseDisplay = ({ response }: ResponseDisplayProps) => {
             <CollapsibleContent>
               <div className="px-5 pb-5 max-h-96 overflow-y-auto space-y-3">
                 {response.timestamps.map((segment, index) => (
-                  <div 
+                  <div
                     key={index}
                     className="p-3 rounded-lg bg-muted/30 border border-border/50 hover:bg-muted/50 transition-colors"
                   >

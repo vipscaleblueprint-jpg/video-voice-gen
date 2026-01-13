@@ -56,6 +56,7 @@ export const AudioTagsForm = ({ onSubmit, isLoading }: AudioTagsFormProps) => {
     const [isAdvancedMode, setIsAdvancedMode] = useState(false);
     const [language, setLanguage] = useState('English');
     const [error, setError] = useState<string | null>(null);
+    const [isSuggesting, setIsSuggesting] = useState(false);
 
     const handleScriptChange = (index: number, value: string) => {
         const newScripts = [...scripts];
@@ -72,6 +73,78 @@ export const AudioTagsForm = ({ onSubmit, isLoading }: AudioTagsFormProps) => {
     const removeScript = (index: number) => {
         const newScripts = scripts.filter((_, i) => i !== index);
         setScripts(newScripts.length ? newScripts : ['']);
+    };
+
+    const handleSuggestTone = async () => {
+        const validScripts = scripts.map(s => s.trim()).filter(s => s.length > 0);
+
+        if (validScripts.length === 0) {
+            setError('Please enter at least one script to generate a tone suggestion.');
+            return;
+        }
+
+        setIsSuggesting(true);
+        setError(null);
+
+        try {
+            const res = await fetch('https://n8n.srv1151765.hstgr.cloud/webhook/tone-suggest', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ scripts: validScripts }),
+            });
+
+            if (!res.ok) throw new Error('Failed to fetch suggestion');
+
+            const data = await res.json();
+
+            let finalSuggestion = '';
+
+            if (Array.isArray(data)) {
+                // Handle array of objects structure
+                const extractedParts: string[] = [];
+
+                data.forEach((item) => {
+                    if (typeof item === 'object' && item !== null) {
+                        Object.values(item).forEach((val: any) => {
+                            if (val && typeof val === 'object') {
+                                // Format the nested object details
+                                const parts = [];
+                                if (val.emotion_tags && Array.isArray(val.emotion_tags)) {
+                                    parts.push(`Emotions: ${val.emotion_tags.join(', ')}`);
+                                }
+                                if (val.pacing) parts.push(`Pacing: ${val.pacing}`);
+                                if (val.energy_level) parts.push(`Energy: ${val.energy_level}`);
+                                if (val.intonation_style) parts.push(`Intonation: ${val.intonation_style}`);
+
+                                if (parts.length > 0) {
+                                    extractedParts.push(parts.join('. '));
+                                }
+                            } else if (typeof val === 'string') {
+                                extractedParts.push(val);
+                            }
+                        });
+                    }
+                });
+
+                if (extractedParts.length > 0) {
+                    finalSuggestion = extractedParts.join('\n\n');
+                } else {
+                    finalSuggestion = JSON.stringify(data, null, 2);
+                }
+            } else if (data.output) {
+                finalSuggestion = data.output;
+            } else {
+                finalSuggestion = typeof data === 'string' ? data : JSON.stringify(data, null, 2);
+            }
+
+            setCustomStyle(finalSuggestion);
+            setIsAdvancedMode(true);
+        } catch (err) {
+            console.error('Suggest tone error:', err);
+            setError('Failed to generate tone suggestion. Please try again.');
+        } finally {
+            setIsSuggesting(false);
+        }
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -132,6 +205,24 @@ export const AudioTagsForm = ({ onSubmit, isLoading }: AudioTagsFormProps) => {
                                 className="scale-75 origin-right"
                             />
                         </div>
+                    </div>
+
+                    <div className="flex justify-end mb-2">
+                        <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={handleSuggestTone}
+                            disabled={isSuggesting || scripts.every(s => !s.trim())}
+                            className="text-xs h-7 gap-1.5 bg-primary/5 hover:bg-primary/10 border-primary/20 text-primary"
+                        >
+                            {isSuggesting ? (
+                                <Loader2 className="w-3 h-3 animate-spin" />
+                            ) : (
+                                <Sparkles className="w-3 h-3" />
+                            )}
+                            Suggest Tone
+                        </Button>
                     </div>
 
                     {isAdvancedMode ? (

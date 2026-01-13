@@ -28,7 +28,7 @@ const AudioTags = () => {
                 throw new Error(`Request failed with status ${res.status}`);
             }
 
-            const text = await res.text();
+            const text = await res.text();  
             let data;
             try {
                 data = JSON.parse(text);
