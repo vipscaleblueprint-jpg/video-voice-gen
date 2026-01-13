@@ -173,7 +173,7 @@ export const CaptionUploadForm = ({ onSubmit, isLoading }: CaptionUploadFormProp
       {/* Caption Input (Required) */}
       <div className="space-y-2">
         <Label htmlFor="caption" className="text-muted-foreground">
-          Caption <span className="text-destructive">*</span>
+          Script <span className="text-destructive">*</span>
         </Label>
         <Textarea
           id="caption"

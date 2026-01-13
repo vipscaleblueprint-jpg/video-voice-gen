@@ -1,5 +1,5 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
-import { Upload, Film, X, Loader2, AlertCircle, Sparkles } from 'lucide-react';
+import { Upload, Film, X, Loader2, AlertCircle, Sparkles, FileText } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
@@ -69,6 +69,8 @@ export const VideoUploadForm = ({ onSubmit, onPersonaGenerated, paraphrasedText,
   const [caption, setCaption] = useState('');
   const [personaInput, setPersonaInput] = useState('');
   const [isGeneratingPersona, setIsGeneratingPersona] = useState(false);
+  const [inputMode, setInputMode] = useState<'video' | 'text'>('video');
+  const [originalScriptText, setOriginalScriptText] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
 
@@ -164,10 +166,36 @@ export const VideoUploadForm = ({ onSubmit, onPersonaGenerated, paraphrasedText,
 
       const data = await res.json();
 
-      // Parse array response format: [{"output": "..."}]
+      // Parse new array response format: [{"script": {...}, "hook": "...", ...}]
       let generatedText = '';
-      if (Array.isArray(data) && data.length > 0 && data[0].output) {
-        generatedText = data[0].output;
+
+      if (Array.isArray(data) && data.length > 0) {
+        const responseData = data[0];
+
+        // Check if script object exists
+        if (responseData.script) {
+          const script = responseData.script;
+          const sections = [];
+
+          // Add each section with its label
+          if (script.HOOK) sections.push(`[HOOK]\n${script.HOOK}`);
+          if (script.PERSONA) sections.push(`[PERSONA]\n${script.PERSONA}`);
+          if (script['BRIDGE LINE']) sections.push(`[BRIDGE LINE]\n${script['BRIDGE LINE']}`);
+
+          // Add steps
+          for (let i = 1; i <= 10; i++) {
+            const stepKey = `STEP ${i}`;
+            if (script[stepKey]) {
+              sections.push(`[${stepKey}]\n${script[stepKey]}`);
+            }
+          }
+
+          if (script.CTA) sections.push(`[CTA]\n${script.CTA}`);
+
+          generatedText = sections.join('\n\n');
+        } else if (responseData.output) {
+          generatedText = responseData.output;
+        }
       } else if (data.output) {
         generatedText = data.output;
       } else if (data.persona_line) {
@@ -204,8 +232,14 @@ export const VideoUploadForm = ({ onSubmit, onPersonaGenerated, paraphrasedText,
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!file) {
+
+    // Validation based on input mode
+    if (inputMode === 'video' && !file) {
       setError('Please select a video file.');
+      return;
+    }
+    if (inputMode === 'text' && !originalScriptText.trim()) {
+      setError('Please enter the original script text.');
       return;
     }
     if (!prompt.trim()) {
@@ -214,7 +248,17 @@ export const VideoUploadForm = ({ onSubmit, onPersonaGenerated, paraphrasedText,
     }
 
     const formData = new FormData();
-    formData.append('reel', file);
+
+    // Add mode to indicate input type
+    formData.append('mode', inputMode);
+
+    if (inputMode === 'video') {
+      formData.append('reel', file!);
+    } else {
+      // For text mode, send the original script as a text field
+      formData.append('original_script', originalScriptText);
+    }
+
     formData.append('language', language);
     formData.append('prompt', prompt);
     formData.append('content_type', contentType);
@@ -236,94 +280,156 @@ export const VideoUploadForm = ({ onSubmit, onPersonaGenerated, paraphrasedText,
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
-      {/* Drop Zone */}
-      <div
-        onDrop={handleDrop}
-        onDragOver={handleDragOver}
-        onDragLeave={handleDragLeave}
-        onClick={() => fileInputRef.current?.click()}
-        className={cn(
-          "relative border-2 border-dashed rounded-xl p-8 transition-all duration-300 cursor-pointer group",
-          "hover:border-primary/60 hover:bg-primary/5",
-          isDragging ? "border-primary bg-primary/10 scale-[1.02]" : "border-border",
-          file && "border-success/50 bg-success/5"
-        )}
-      >
-        <input
-          ref={fileInputRef}
-          type="file"
-          accept=".mp4,.mov,video/mp4,video/quicktime"
-          onChange={(e) => e.target.files?.[0] && handleFile(e.target.files[0])}
-          className="hidden"
-        />
-
-        <div className="flex flex-col items-center gap-4 text-center">
-          {file && videoPreviewUrl ? (
-            <>
-              <div className="w-full max-w-xs rounded-lg overflow-hidden bg-black">
-                <video
-                  ref={videoRef}
-                  src={videoPreviewUrl}
-                  controls
-                  className="w-full h-auto max-h-48 object-contain"
-                  onClick={(e) => e.stopPropagation()}
-                />
-              </div>
-              <div className="max-w-full overflow-hidden">
-                <p className="font-medium text-foreground break-words text-sm max-w-[250px]">{file.name}</p>
-                <p className="text-sm text-muted-foreground">{formatFileSize(file.size)}</p>
-              </div>
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setFile(null);
-                }}
-                className="text-muted-foreground hover:text-destructive"
-              >
-                <X className="w-4 h-4 mr-1" />
-                Remove
-              </Button>
-            </>
-          ) : (
-            <>
-              <div className={cn(
-                "w-16 h-16 rounded-full bg-muted flex items-center justify-center transition-all",
-                "group-hover:bg-primary/20 group-hover:scale-110",
-                isDragging && "bg-primary/20 scale-110 animate-pulse"
-              )}>
-                <Upload className={cn(
-                  "w-8 h-8 text-muted-foreground transition-colors",
-                  "group-hover:text-primary",
-                  isDragging && "text-primary"
-                )} />
-              </div>
-              <div>
-                <p className="font-medium text-foreground">
-                  Drop your video here or <span className="text-primary">browse</span>
-                </p>
-                <p className="text-sm text-muted-foreground mt-1">
-                  MP4, MOV • Max {MAX_FILE_SIZE_MB}MB
-                </p>
-              </div>
-            </>
+      {/* Input Mode Toggle */}
+      <div className="flex gap-2 p-1 bg-secondary rounded-lg">
+        <Button
+          type="button"
+          onClick={() => setInputMode('video')}
+          className={cn(
+            "flex-1 h-10",
+            inputMode === 'video'
+              ? "bg-primary text-primary-foreground"
+              : "bg-transparent text-muted-foreground hover:text-foreground"
           )}
-        </div>
-
-        {/* Animated border glow when dragging */}
-        {isDragging && (
-          <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-primary/20 via-accent/20 to-primary/20 animate-pulse pointer-events-none" />
-        )}
+        >
+          <Film className="w-4 h-4 mr-2" />
+          Video Upload
+        </Button>
+        <Button
+          type="button"
+          onClick={() => setInputMode('text')}
+          className={cn(
+            "flex-1 h-10",
+            inputMode === 'text'
+              ? "bg-primary text-primary-foreground"
+              : "bg-transparent text-muted-foreground hover:text-foreground"
+          )}
+        >
+          <FileText className="w-4 h-4 mr-2" />
+          Text Input
+        </Button>
       </div>
 
-      {/* Error Display */}
-      {error && (
-        <div className="flex items-center gap-2 p-3 rounded-lg bg-destructive/10 border border-destructive/30 text-destructive">
-          <AlertCircle className="w-4 h-4 flex-shrink-0" />
-          <p className="text-sm">{error}</p>
-        </div>
+      {/* Video Upload Section */}
+      {inputMode === 'video' && (
+        <>
+          {/* Drop Zone */}
+          <div
+            onDrop={handleDrop}
+            onDragOver={handleDragOver}
+            onDragLeave={handleDragLeave}
+            onClick={() => fileInputRef.current?.click()}
+            className={cn(
+              "relative border-2 border-dashed rounded-xl p-8 transition-all duration-300 cursor-pointer group",
+              "hover:border-primary/60 hover:bg-primary/5",
+              isDragging ? "border-primary bg-primary/10 scale-[1.02]" : "border-border",
+              file && "border-success/50 bg-success/5"
+            )}
+          >
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept=".mp4,.mov,video/mp4,video/quicktime"
+              onChange={(e) => e.target.files?.[0] && handleFile(e.target.files[0])}
+              className="hidden"
+            />
+
+            <div className="flex flex-col items-center gap-4 text-center">
+              {file && videoPreviewUrl ? (
+                <>
+                  <div className="w-full max-w-xs rounded-lg overflow-hidden bg-black">
+                    <video
+                      ref={videoRef}
+                      src={videoPreviewUrl}
+                      controls
+                      className="w-full h-auto max-h-48 object-contain"
+                      onClick={(e) => e.stopPropagation()}
+                    />
+                  </div>
+                  <div className="max-w-full overflow-hidden">
+                    <p className="font-medium text-foreground break-words text-sm max-w-[250px]">{file.name}</p>
+                    <p className="text-sm text-muted-foreground">{formatFileSize(file.size)}</p>
+                  </div>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setFile(null);
+                    }}
+                    className="text-muted-foreground hover:text-destructive"
+                  >
+                    <X className="w-4 h-4 mr-1" />
+                    Remove
+                  </Button>
+                </>
+              ) : (
+                <>
+                  <div className={cn(
+                    "w-16 h-16 rounded-full bg-muted flex items-center justify-center transition-all",
+                    "group-hover:bg-primary/20 group-hover:scale-110",
+                    isDragging && "bg-primary/20 scale-110 animate-pulse"
+                  )}>
+                    <Upload className={cn(
+                      "w-8 h-8 text-muted-foreground transition-colors",
+                      "group-hover:text-primary",
+                      isDragging && "text-primary"
+                    )} />
+                  </div>
+                  <div>
+                    <p className="font-medium text-foreground">
+                      Drop your video here or <span className="text-primary">browse</span>
+                    </p>
+                    <p className="text-sm text-muted-foreground mt-1">
+                      MP4, MOV • Max {MAX_FILE_SIZE_MB}MB
+                    </p>
+                  </div>
+                </>
+              )}
+            </div>
+
+            {/* Animated border glow when dragging */}
+            {isDragging && (
+              <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-primary/20 via-accent/20 to-primary/20 animate-pulse pointer-events-none" />
+            )}
+          </div>
+
+          {/* Error Display */}
+          {error && (
+            <div className="flex items-center gap-2 p-3 rounded-lg bg-destructive/10 border border-destructive/30 text-destructive">
+              <AlertCircle className="w-4 h-4 flex-shrink-0" />
+              <p className="text-sm">{error}</p>
+            </div>
+          )}
+        </>
+      )}
+
+      {/* Text Input Section */}
+      {inputMode === 'text' && (
+        <>
+          <div className="space-y-2">
+            <Label htmlFor="originalScript" className="text-muted-foreground">
+              Original Script <span className="text-destructive">*</span>
+            </Label>
+            <Textarea
+              id="originalScript"
+              value={originalScriptText}
+              onChange={(e) => setOriginalScriptText(e.target.value)}
+              placeholder="Paste your original script here..."
+              rows={10}
+              className="bg-secondary border-border focus:border-primary focus:ring-primary/20 resize-y min-h-[200px]"
+            />
+          </div>
+
+          {/* Error Display */}
+          {error && (
+            <div className="flex items-center gap-2 p-3 rounded-lg bg-destructive/10 border border-destructive/30 text-destructive">
+              <AlertCircle className="w-4 h-4 flex-shrink-0" />
+              <p className="text-sm">{error}</p>
+            </div>
+          )}
+        </>
       )}
 
 
@@ -458,7 +564,7 @@ export const VideoUploadForm = ({ onSubmit, onPersonaGenerated, paraphrasedText,
       {/* Submit Button */}
       <Button
         type="submit"
-        disabled={isLoading || !file}
+        disabled={isLoading || (inputMode === 'video' ? !file : !originalScriptText.trim())}
         className="w-full h-12 text-base font-semibold bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50 glow-primary transition-all"
       >
         {isLoading ? (
@@ -504,3 +610,4 @@ export const VideoUploadForm = ({ onSubmit, onPersonaGenerated, paraphrasedText,
     </form>
   );
 };
+
