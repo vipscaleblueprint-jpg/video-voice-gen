@@ -41,7 +41,7 @@ interface CtaOption {
 const PROMPTS_API = 'https://n8n.srv1151765.hstgr.cloud/webhook/32117416-351b-4703-8ffb-931dec69efa4';
 const CTA_API = 'https://n8n.srv1151765.hstgr.cloud/webhook/e5260e03-6ded-4448-ab29-52f88af0d35b';
 const GENERATE_PERSONA_API = 'https://n8n.srv1151765.hstgr.cloud/webhook/generate-persona';
-const CAPTION_PARAPHRASE_API = 'https://n8n.srv1151765.hstgr.cloud/webhook/caption-parapharse-single';
+const CAPTION_PARAPHRASE_API = 'https://n8n.srv1151765.hstgr.cloud/webhook/caption-paraphrase-single';
 
 interface VideoUploadFormProps {
   onSubmit: (formData: FormData) => Promise<void>;
@@ -649,7 +649,7 @@ export const VideoUploadForm = ({ onSubmit, onPersonaGenerated, paraphrasedText,
         <Button
           type="button"
           onClick={handleGeneratePersona}
-          disabled={isGeneratingPersona || !personaInput.trim() || !!paraphrasedText}
+          disabled={isLoading || (inputMode === 'video' ? !file : !originalScriptText.trim())}
           className="w-full h-12 text-base font-semibold bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50 glow-primary transition-all"
         >
           {isGeneratingPersona ? (
