@@ -1,17 +1,18 @@
 import { useState } from 'react';
-import { AudioTagsForm, type AudioTagsFormPayload } from '@/components/AudioTagsForm';
-import { AudioTagsResponseDisplay } from '@/components/AudioTagsResponseDisplay';
-import { Mic, Loader2 } from 'lucide-react';
+import { CaptionUploadForm, type CaptionFormPayload } from '@/components/CaptionUploadForm';
+import { CaptionResponseDisplay } from '@/components/CaptionResponseDisplay';
+import { MessageSquare, Loader2 } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { NavLink } from '@/components/NavLink';
+import { SocialCaptions } from './CaptionTranscriber';
 
-const API_ENDPOINT = 'https://n8n.srv1151765.hstgr.cloud/webhook/audio-tags';
+const API_ENDPOINT = 'https://n8n.srv1151765.hstgr.cloud/webhook/407de3d3-396a-4b78-a333-9ad9ca317bc1';
 
-const AudioTags = () => {
+const CaptionParaphraser = () => {
     const [isLoading, setIsLoading] = useState(false);
-    const [response, setResponse] = useState<string[] | null>(null);
+    const [response, setResponse] = useState<SocialCaptions | null>(null);
 
-    const handleSubmit = async (payload: AudioTagsFormPayload) => {
+    const handleSubmit = async (payload: CaptionFormPayload) => {
         setIsLoading(true);
         setResponse(null);
 
@@ -25,66 +26,25 @@ const AudioTags = () => {
             });
 
             if (!res.ok) {
-                throw new Error(`Request failed with status ${res.status}`);
+                throw new Error(`Upload failed with status ${res.status}`);
             }
 
-            const text = await res.text();
-            let data;
-            try {
-                data = JSON.parse(text);
-            } catch (e) {
-                // Not JSON, use text directly
-                data = text;
-            }
-
-            if (Array.isArray(data)) {
-                const allScripts: string[] = [];
-                data.forEach((item: any) => {
-                    if (item && typeof item === 'object') {
-                        if (item.output) {
-                            allScripts.push(String(item.output));
-                        } else {
-                            // Extract values from keys like "Script1", "Script2"
-                            Object.values(item).forEach((val) => {
-                                if (val && (typeof val === 'string' || typeof val === 'number')) {
-                                    allScripts.push(String(val));
-                                }
-                            });
-                        }
-                    } else if (typeof item === 'string') {
-                        allScripts.push(item);
-                    }
-                });
-                setResponse(allScripts.length > 0 ? allScripts : [JSON.stringify(data, null, 2)]);
-            } else if (typeof data === 'object' && data !== null) {
-                if ('output' in data) {
-                    // @ts-ignore
-                    setResponse([String(data.output)]);
-                } else {
-                    // Extract all values
-                    const scripts = Object.values(data)
-                        .filter(val => val && (typeof val === 'string' || typeof val === 'number'))
-                        .map(String);
-
-                    if (scripts.length > 0) {
-                        setResponse(scripts);
-                    } else {
-                        setResponse([JSON.stringify(data, null, 2)]);
-                    }
-                }
+            const data = await res.json();
+            // Handle the case where the API returns an array (take the first item)
+            if (Array.isArray(data) && data.length > 0) {
+                setResponse(data[0]);
             } else {
-                setResponse([String(data)]);
+                setResponse(data);
             }
-
             toast({
                 title: 'Success',
-                description: 'Audio tags applied successfully!',
+                description: 'Captions generated successfully!',
             });
         } catch (error) {
-            console.error('API error:', error);
+            console.error('Upload error:', error);
             toast({
                 title: 'Error',
-                description: error instanceof Error ? error.message : 'Failed to apply tags. Please try again.',
+                description: error instanceof Error ? error.message : 'Failed to generate captions. Please try again.',
                 variant: 'destructive',
             });
         } finally {
@@ -112,13 +72,13 @@ const AudioTags = () => {
                 {/* Header */}
                 <div className="text-center mb-10">
                     <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-primary/20 mb-4 glow-primary">
-                        <Mic className="w-8 h-8 text-primary" />
+                        <MessageSquare className="w-8 h-8 text-primary" />
                     </div>
                     <h1 className="text-3xl md:text-4xl font-bold text-foreground mb-2">
-                        Audio <span className="gradient-text">Tags</span>
+                        Caption <span className="gradient-text">Paraphraser</span>
                     </h1>
                     <p className="text-muted-foreground max-w-md mx-auto">
-                        Apply ElevenLabs audio tags to your script.
+                        Generate platform-specific captions with the updated workflow.
                     </p>
                 </div>
 
@@ -126,7 +86,7 @@ const AudioTags = () => {
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                     {/* Left Side - Input Form */}
                     <div className="glass rounded-2xl p-6 md:p-8 shadow-card h-fit">
-                        <AudioTagsForm onSubmit={handleSubmit} isLoading={isLoading} />
+                        <CaptionUploadForm onSubmit={handleSubmit} isLoading={isLoading} />
                     </div>
 
                     {/* Right Side - Response Display */}
@@ -134,15 +94,15 @@ const AudioTags = () => {
                         {isLoading ? (
                             <div className="glass rounded-2xl p-6 md:p-8 shadow-card flex flex-col items-center justify-center min-h-[300px] text-center">
                                 <Loader2 className="w-12 h-12 text-primary animate-spin mb-4" />
-                                <p className="text-muted-foreground font-medium">Applying tags...</p>
+                                <p className="text-muted-foreground font-medium">Generating captions...</p>
                                 <p className="text-xs text-muted-foreground/70 mt-2">This may take a few moments</p>
                             </div>
                         ) : response ? (
-                            <AudioTagsResponseDisplay response={response} />
+                            <CaptionResponseDisplay captions={response} />
                         ) : (
                             <div className="glass rounded-2xl p-6 md:p-8 shadow-card flex flex-col items-center justify-center min-h-[300px] text-center">
                                 <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mb-4">
-                                    <Mic className="w-8 h-8 text-muted-foreground" />
+                                    <MessageSquare className="w-8 h-8 text-muted-foreground" />
                                 </div>
                                 <p className="text-muted-foreground">
                                     Result Section
@@ -156,4 +116,4 @@ const AudioTags = () => {
     );
 };
 
-export default AudioTags;
+export default CaptionParaphraser;

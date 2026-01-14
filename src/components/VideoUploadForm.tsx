@@ -546,36 +546,32 @@ export const VideoUploadForm = ({ onSubmit, onPersonaGenerated, paraphrasedText,
         />
       </div>
 
-      {/* Caption (Optional) */}
+      {/* Persona Input */}
       <div className="space-y-2">
-        <div className="flex items-center justify-between">
-          <Label htmlFor="caption" className="text-muted-foreground">
-            Caption <span className="text-xs text-muted-foreground/70">(Optional)</span>
-          </Label>
-          <Button
-            type="button"
-            variant="ghost"
-            size="sm"
-            onClick={handleParaphraseCaption}
-            disabled={!caption.trim() || isParaphrasingCaption}
-            className="h-8 px-2 text-muted-foreground hover:text-primary disabled:opacity-50 transition-colors"
-            title="Paraphrase caption"
-          >
-            {isParaphrasingCaption ? (
-              <Loader2 className="w-4 h-4 animate-spin" />
-            ) : (
-              <Sparkles className="w-4 h-4" />
-            )}
-          </Button>
-        </div>
+        <Label htmlFor="personaInput" className="text-muted-foreground">
+          Persona Input <span className="text-xs text-muted-foreground/70">(Who you help & Outcome)</span>
+        </Label>
         <Textarea
-          id="caption"
-          value={caption}
-          onChange={(e) => setCaption(e.target.value)}
-          placeholder="Enter a caption for the video..."
+          id="personaInput"
+          value={personaInput}
+          onChange={(e) => setPersonaInput(e.target.value)}
+          placeholder="e.g. I am Jenesia Red, a fractional CMO who helps creators with AI content and funnels."
           rows={3}
           className="bg-secondary border-border focus:border-primary focus:ring-primary/20 resize-y"
         />
+        <Button
+          type="button"
+          onClick={handleGeneratePersona}
+          disabled={isLoading || (inputMode === 'video' ? !file : !originalScriptText.trim())}
+          className="w-full h-12 text-base font-semibold bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50 glow-primary transition-all"
+        >
+          {isGeneratingPersona ? (
+            <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+          ) : (
+            <Sparkles className="w-5 h-5 mr-2" />
+          )}
+          Generate Persona
+        </Button>
       </div>
 
       {/* CTA Dropdown */}
@@ -633,33 +629,6 @@ export const VideoUploadForm = ({ onSubmit, onPersonaGenerated, paraphrasedText,
         )}
       </Button>
 
-      {/* Persona Input */}
-      <div className="space-y-2">
-        <Label htmlFor="personaInput" className="text-muted-foreground">
-          Persona Input <span className="text-xs text-muted-foreground/70">(Who you help & Outcome)</span>
-        </Label>
-        <Textarea
-          id="personaInput"
-          value={personaInput}
-          onChange={(e) => setPersonaInput(e.target.value)}
-          placeholder="e.g. I am Jenesia Red, a fractional CMO who helps creators with AI content and funnels."
-          rows={3}
-          className="bg-secondary border-border focus:border-primary focus:ring-primary/20 resize-y"
-        />
-        <Button
-          type="button"
-          onClick={handleGeneratePersona}
-          disabled={isLoading || (inputMode === 'video' ? !file : !originalScriptText.trim())}
-          className="w-full h-12 text-base font-semibold bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50 glow-primary transition-all"
-        >
-          {isGeneratingPersona ? (
-            <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-          ) : (
-            <Sparkles className="w-5 h-5 mr-2" />
-          )}
-          Generate Persona
-        </Button>
-      </div>
     </form>
   );
 };

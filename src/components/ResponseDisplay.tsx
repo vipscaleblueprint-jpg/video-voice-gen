@@ -202,15 +202,6 @@ export const ResponseDisplay = ({ response }: ResponseDisplayProps) => {
         />
       )}
 
-      {/* Caption */}
-      {response.caption && (
-        <ResponseCard
-          icon={MessageSquare}
-          title="Caption"
-          content={response.caption}
-          className="border-primary/20"
-        />
-      )}
 
       {/* Generated Persona (Displayed after all analysis results) */}
       {response.persona_line && (

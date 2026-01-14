@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Index from "./pages/Index";
 import CaptionTranscriber from "./pages/CaptionTranscriber";
+import CaptionParaphraser from "./pages/CaptionParaphraser";
 import AudioTags from "./pages/AudioTags";
 import NotFound from "./pages/NotFound";
 
@@ -19,6 +20,7 @@ const App = () => (
         <Routes>
           <Route path="/" element={<Index />} />
           <Route path="/caption-transcriber" element={<CaptionTranscriber />} />
+          <Route path="/caption-paraphraser" element={<CaptionParaphraser />} />
           <Route path="/audio-tags" element={<AudioTags />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
