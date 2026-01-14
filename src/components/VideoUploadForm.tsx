@@ -41,6 +41,7 @@ interface CtaOption {
 const PROMPTS_API = 'https://n8n.srv1151765.hstgr.cloud/webhook/32117416-351b-4703-8ffb-931dec69efa4';
 const CTA_API = 'https://n8n.srv1151765.hstgr.cloud/webhook/e5260e03-6ded-4448-ab29-52f88af0d35b';
 const GENERATE_PERSONA_API = 'https://n8n.srv1151765.hstgr.cloud/webhook/generate-persona';
+const CAPTION_PARAPHRASE_API = 'https://n8n.srv1151765.hstgr.cloud/webhook/caption-parapharse-single';
 
 interface VideoUploadFormProps {
   onSubmit: (formData: FormData) => Promise<void>;
@@ -71,6 +72,7 @@ export const VideoUploadForm = ({ onSubmit, onPersonaGenerated, paraphrasedText,
   const [isGeneratingPersona, setIsGeneratingPersona] = useState(false);
   const [inputMode, setInputMode] = useState<'video' | 'text'>('video');
   const [originalScriptText, setOriginalScriptText] = useState('');
+  const [isParaphrasingCaption, setIsParaphrasingCaption] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
 
@@ -148,6 +150,40 @@ export const VideoUploadForm = ({ onSubmit, onPersonaGenerated, paraphrasedText,
     const droppedFile = e.dataTransfer.files[0];
     if (droppedFile) handleFile(droppedFile);
   }, [handleFile]);
+
+  const handleParaphraseCaption = async () => {
+    if (!caption.trim()) return;
+
+    setIsParaphrasingCaption(true);
+    setError(null);
+    try {
+      const res = await fetch(CAPTION_PARAPHRASE_API, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ caption: caption })
+      });
+
+      if (!res.ok) throw new Error('Failed to paraphrase caption');
+
+      const data = await res.json();
+
+      // Update caption with paraphrased result
+      if (data.paraphrased_caption) {
+        setCaption(data.paraphrased_caption);
+      } else if (data.caption) {
+        setCaption(data.caption);
+      } else if (typeof data === 'string') {
+        setCaption(data);
+      } else {
+        throw new Error('Invalid response format');
+      }
+    } catch (err) {
+      console.error('Caption paraphrase error:', err);
+      setError('Failed to paraphrase caption. Please try again.');
+    } finally {
+      setIsParaphrasingCaption(false);
+    }
+  };
 
   const handleGeneratePersona = async () => {
     setIsGeneratingPersona(true);
@@ -512,9 +548,26 @@ export const VideoUploadForm = ({ onSubmit, onPersonaGenerated, paraphrasedText,
 
       {/* Caption (Optional) */}
       <div className="space-y-2">
-        <Label htmlFor="caption" className="text-muted-foreground">
-          Caption <span className="text-xs text-muted-foreground/70">(Optional)</span>
-        </Label>
+        <div className="flex items-center justify-between">
+          <Label htmlFor="caption" className="text-muted-foreground">
+            Caption <span className="text-xs text-muted-foreground/70">(Optional)</span>
+          </Label>
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            onClick={handleParaphraseCaption}
+            disabled={!caption.trim() || isParaphrasingCaption}
+            className="h-8 px-2 text-muted-foreground hover:text-primary disabled:opacity-50 transition-colors"
+            title="Paraphrase caption"
+          >
+            {isParaphrasingCaption ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : (
+              <Sparkles className="w-4 h-4" />
+            )}
+          </Button>
+        </div>
         <Textarea
           id="caption"
           value={caption}
@@ -596,7 +649,7 @@ export const VideoUploadForm = ({ onSubmit, onPersonaGenerated, paraphrasedText,
         <Button
           type="button"
           onClick={handleGeneratePersona}
-          disabled={isGeneratingPersona || !paraphrasedText}
+          disabled={isGeneratingPersona || !personaInput.trim() || !!paraphrasedText}
           className="w-full h-12 text-base font-semibold bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50 glow-primary transition-all"
         >
           {isGeneratingPersona ? (
