@@ -4,7 +4,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Index from "./pages/Index";
-import CaptionTranscriber from "./pages/CaptionTranscriber";
+import ScriptGenerator from "./pages/ScriptGenerator";
 import CaptionParaphraser from "./pages/CaptionParaphraser";
 import AudioTags from "./pages/AudioTags";
 import NotFound from "./pages/NotFound";
@@ -19,7 +19,7 @@ const App = () => (
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<Index />} />
-          <Route path="/caption-transcriber" element={<CaptionTranscriber />} />
+          <Route path="/script-generator" element={<ScriptGenerator />} />
           <Route path="/caption-paraphraser" element={<CaptionParaphraser />} />
           <Route path="/audio-tags" element={<AudioTags />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}

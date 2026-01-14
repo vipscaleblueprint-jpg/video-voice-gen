@@ -4,7 +4,7 @@ import { CaptionResponseDisplay } from '@/components/CaptionResponseDisplay';
 import { MessageSquare, Loader2 } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { NavLink } from '@/components/NavLink';
-import { SocialCaptions } from './CaptionTranscriber';
+import { SocialCaptions } from '@/types';
 
 const API_ENDPOINT = 'https://n8n.srv1151765.hstgr.cloud/webhook/407de3d3-396a-4b78-a333-9ad9ca317bc1';
 
@@ -65,7 +65,7 @@ const CaptionParaphraser = () => {
                 <nav className="flex items-center gap-4 mb-8">
                     <NavLink to="/">Reel Paraphraser</NavLink>
                     <NavLink to="/caption-paraphraser">Caption Paraphraser</NavLink>
-                    <NavLink to="/caption-transcriber">Caption Generator</NavLink>
+                    <NavLink to="/script-generator">Script Generator</NavLink>
                     <NavLink to="/audio-tags">Audio Tags</NavLink>
                 </nav>
 
@@ -98,7 +98,11 @@ const CaptionParaphraser = () => {
                                 <p className="text-xs text-muted-foreground/70 mt-2">This may take a few moments</p>
                             </div>
                         ) : response ? (
-                            <CaptionResponseDisplay captions={response} />
+                            <CaptionResponseDisplay
+                                captions={response}
+                                title="Generated Paraphrase Caption"
+                                emptyMessage="No paraphrase captions were generated."
+                            />
                         ) : (
                             <div className="glass rounded-2xl p-6 md:p-8 shadow-card flex flex-col items-center justify-center min-h-[300px] text-center">
                                 <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mb-4">

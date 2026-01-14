@@ -28,6 +28,8 @@ const PLATFORM_CONFIG: Record<string, { label: string; color: string }> = {
 
 interface CaptionResponseDisplayProps {
   captions: SocialCaptions;
+  title?: string;
+  emptyMessage?: string;
 }
 
 const CopyButton = ({ text }: { text: string }) => {
@@ -36,7 +38,7 @@ const CopyButton = ({ text }: { text: string }) => {
   const handleCopy = async () => {
     await navigator.clipboard.writeText(text);
     setCopied(true);
-    toast({ title: 'Copied!', description: 'Caption copied to clipboard.' });
+    toast({ title: 'Copied!', description: 'Content copied to clipboard.' });
     setTimeout(() => setCopied(false), 2000);
   };
 
@@ -52,7 +54,11 @@ const CopyButton = ({ text }: { text: string }) => {
   );
 };
 
-export const CaptionResponseDisplay = ({ captions }: CaptionResponseDisplayProps) => {
+export const CaptionResponseDisplay = ({
+  captions,
+  title = "Generated Captions",
+  emptyMessage = "No captions were generated."
+}: CaptionResponseDisplayProps) => {
   // Filter out empty/null/undefined captions and unknown platforms
   const validCaptions = Object.entries(captions).filter(
     ([key, value]) => {
@@ -70,7 +76,7 @@ export const CaptionResponseDisplay = ({ captions }: CaptionResponseDisplayProps
   if (validCaptions.length === 0) {
     return (
       <div className="glass rounded-2xl p-6 md:p-8 shadow-card text-center">
-        <p className="text-muted-foreground">No captions were generated.</p>
+        <p className="text-muted-foreground">{emptyMessage}</p>
       </div>
     );
   }
@@ -78,7 +84,7 @@ export const CaptionResponseDisplay = ({ captions }: CaptionResponseDisplayProps
   return (
     <div className="glass rounded-2xl p-6 md:p-8 shadow-card space-y-4">
       <h2 className="text-xl font-semibold text-foreground mb-4">
-        Generated Captions ({validCaptions.length})
+        {title} ({validCaptions.length})
       </h2>
 
       <div className="space-y-4">
