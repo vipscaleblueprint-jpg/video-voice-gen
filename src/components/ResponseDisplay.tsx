@@ -126,7 +126,8 @@ export const ResponseDisplay = ({ response }: ResponseDisplayProps) => {
       socialCaptions[platform] = {
         content: content,
         title: '',
-        hashtags: ''
+        hashtags: '',
+        caption: ''
       };
     }
   };

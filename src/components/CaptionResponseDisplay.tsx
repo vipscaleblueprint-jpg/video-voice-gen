@@ -97,6 +97,7 @@ export const CaptionResponseDisplay = ({
           const fullText = [
             data.title ? `Title: ${data.title}` : '',
             data.content,
+            data.caption ? `Caption: ${data.caption}` : '',
             data.hashtags
           ].filter(Boolean).join('\n\n');
 
@@ -131,6 +132,16 @@ export const CaptionResponseDisplay = ({
                   </div>
                   <p className="text-muted-foreground text-sm whitespace-pre-wrap bg-background/50 p-2 rounded-md">{data.content}</p>
                 </div>
+
+                {data.caption && (
+                  <div className="relative group">
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Caption/Hook</span>
+                      <CopyButton text={data.caption} />
+                    </div>
+                    <p className="text-muted-foreground text-sm whitespace-pre-wrap bg-background/50 p-2 rounded-md italic border-l-2 border-primary/30 pl-3">{data.caption}</p>
+                  </div>
+                )}
 
                 {data.hashtags && (
                   <div className="relative group">

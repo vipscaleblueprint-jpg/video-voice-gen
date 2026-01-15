@@ -6,7 +6,7 @@ import { toast } from '@/hooks/use-toast';
 import { NavLink } from '@/components/NavLink';
 import { SocialCaptions } from '@/types';
 
-const API_ENDPOINT = 'https://n8n.srv1151765.hstgr.cloud/webhook/generate-caption';
+const API_ENDPOINT = 'https://n8n.srv1151765.hstgr.cloud/webhook/generate-script';
 
 const ScriptGenerator = () => {
   const [isLoading, setIsLoading] = useState(false);
