@@ -256,7 +256,6 @@ export const VideoUploadForm = ({ onSubmit, onPersonaGenerated, paraphrasedText,
       }
 
       if (generatedText) {
-        setPersonaInput(generatedText);
         onPersonaGenerated(generatedText);
       } else {
         throw new Error('Invalid response format');
