@@ -2,7 +2,7 @@ import { Copy, Check } from 'lucide-react';
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { toast } from '@/hooks/use-toast';
-import type { SocialCaptions, CaptionData } from '@/pages/CaptionTranscriber';
+import type { SocialCaptions, CaptionData } from '@/types';
 
 // Platform icons/labels mapping (lowercase keys)
 const PLATFORM_CONFIG: Record<string, { label: string; color: string }> = {
@@ -63,11 +63,12 @@ export const CaptionResponseDisplay = ({
   const validCaptions = Object.entries(captions).filter(
     ([key, value]) => {
       const platformKey = key.toLowerCase();
+      const data = value as CaptionData;
       return (
-        value &&
-        typeof value === 'object' &&
-        value.content &&
-        value.content.trim() !== '' &&
+        data &&
+        typeof data === 'object' &&
+        data.content &&
+        data.content.trim() !== '' &&
         platformKey in PLATFORM_CONFIG
       );
     }

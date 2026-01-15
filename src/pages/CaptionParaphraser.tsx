@@ -6,7 +6,7 @@ import { toast } from '@/hooks/use-toast';
 import { NavLink } from '@/components/NavLink';
 import { SocialCaptions } from '@/types';
 
-const API_ENDPOINT = 'https://n8n.srv1151765.hstgr.cloud/webhook/407de3d3-396a-4b78-a333-9ad9ca317bc1';
+const API_ENDPOINT = 'https://n8n.srv1151765.hstgr.cloud/webhook/generate-caption';
 
 const CaptionParaphraser = () => {
     const [isLoading, setIsLoading] = useState(false);

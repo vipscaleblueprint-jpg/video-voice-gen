@@ -4,7 +4,7 @@ import { ResponseDisplay } from '@/components/ResponseDisplay';
 import { Film } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { NavLink } from '@/components/NavLink';
-import type { SocialCaptions } from '@/pages/CaptionTranscriber';
+import type { SocialCaptions } from '@/types';
 
 interface ApiResponse {
   original?: string;

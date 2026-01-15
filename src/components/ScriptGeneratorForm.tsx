@@ -47,6 +47,7 @@ export interface ScriptFormPayload {
     cta: string;
     language: string;
     platforms: string[];
+    context: string;
     centralizedPrompt?: string;
     prompts?: Record<string, string>;
 }
@@ -58,6 +59,7 @@ interface ScriptGeneratorFormProps {
 
 export const ScriptGeneratorForm = ({ onSubmit, isLoading }: ScriptGeneratorFormProps) => {
     const [caption, setCaption] = useState('');
+    const [context, setContext] = useState('');
     const [language, setLanguage] = useState('English');
     const [selectedCta, setSelectedCta] = useState('');
     const [ctaOptions, setCtaOptions] = useState<CTAOption[]>([]);
@@ -149,6 +151,7 @@ export const ScriptGeneratorForm = ({ onSubmit, isLoading }: ScriptGeneratorForm
 
         const payload: ScriptFormPayload = {
             caption: caption.trim(),
+            context: context.trim(),
             cta: selectedCta.trim(),
             language,
             platforms: platformNames,
@@ -176,6 +179,21 @@ export const ScriptGeneratorForm = ({ onSubmit, isLoading }: ScriptGeneratorForm
 
     return (
         <form onSubmit={handleSubmit} className="space-y-6">
+            {/* Context Section */}
+            <div className="space-y-2">
+                <Label htmlFor="context" className="text-muted-foreground">
+                    Context
+                </Label>
+                <Textarea
+                    id="context"
+                    value={context}
+                    onChange={(e) => setContext(e.target.value)}
+                    placeholder="Provide additional context or information for the script generation..."
+                    rows={4}
+                    className="bg-secondary border-border focus:border-primary focus:ring-primary/20 resize-y min-h-[100px]"
+                />
+            </div>
+
             {/* Prompt Section (Copy of Prompt Selector from Reel Paraphraser) */}
             <div className="space-y-3">
                 <Label className="text-muted-foreground">
