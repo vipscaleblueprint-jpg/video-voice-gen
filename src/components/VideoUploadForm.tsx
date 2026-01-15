@@ -202,42 +202,55 @@ export const VideoUploadForm = ({ onSubmit, onPersonaGenerated, paraphrasedText,
 
       const data = await res.json();
 
-      // Parse new array response format: [{"script": {...}, "hook": "...", ...}]
+      // Parse response format
       let generatedText = '';
 
       if (Array.isArray(data) && data.length > 0) {
-        const responseData = data[0];
+        const item = data[0];
 
-        // Check if script object exists
-        if (responseData.script) {
-          const script = responseData.script;
+        // Handle format with specific keys: HOOK, PERSONA, BRIDGE_LINE, STEPS, etc.
+        if (item.HOOK || item.PERSONA || item.STEPS) {
           const sections = [];
+          if (item.HOOK) sections.push(`[HOOK]\n${item.HOOK}`);
+          if (item.PERSONA) sections.push(`[PERSONA]\n${item.PERSONA}`);
+          if (item.BRIDGE_LINE) sections.push(`[BRIDGE LINE]\n${item.BRIDGE_LINE}`);
+          if (item.CREDIBILITY_LINE) sections.push(`[CREDIBILITY LINE]\n${item.CREDIBILITY_LINE}`);
+          if (item.OPTIONAL_CREDIBILITY_REMINDER) sections.push(`[CREDIBILITY REMINDER]\n${item.OPTIONAL_CREDIBILITY_REMINDER}`);
 
-          // Add each section with its label
+          if (Array.isArray(item.STEPS)) {
+            item.STEPS.forEach((step: any) => {
+              if (step.label && step.text) {
+                sections.push(`${step.label}\n${step.text}`);
+              } else if (typeof step === 'string') {
+                sections.push(step);
+              }
+            });
+          }
+
+          if (item.CTA) sections.push(`[CTA]\n${item.CTA}`);
+          generatedText = sections.join('\n\n');
+        }
+        // Handle nest script object format
+        else if (item.script) {
+          const script = item.script;
+          const sections = [];
           if (script.HOOK) sections.push(`[HOOK]\n${script.HOOK}`);
           if (script.PERSONA) sections.push(`[PERSONA]\n${script.PERSONA}`);
           if (script['BRIDGE LINE']) sections.push(`[BRIDGE LINE]\n${script['BRIDGE LINE']}`);
-
-          // Add steps
           for (let i = 1; i <= 10; i++) {
             const stepKey = `STEP ${i}`;
-            if (script[stepKey]) {
-              sections.push(`[${stepKey}]\n${script[stepKey]}`);
-            }
+            if (script[stepKey]) sections.push(`[${stepKey}]\n${script[stepKey]}`);
           }
-
           if (script.CTA) sections.push(`[CTA]\n${script.CTA}`);
-
           generatedText = sections.join('\n\n');
-        } else if (responseData.output) {
-          generatedText = responseData.output;
+        }
+        else if (item.output) {
+          generatedText = item.output;
         }
       } else if (data.output) {
         generatedText = data.output;
       } else if (data.persona_line) {
         generatedText = data.persona_line;
-      } else if (data.text) {
-        generatedText = data.text;
       } else if (typeof data === 'string') {
         generatedText = data;
       }
@@ -546,34 +559,6 @@ export const VideoUploadForm = ({ onSubmit, onPersonaGenerated, paraphrasedText,
         />
       </div>
 
-      {/* Persona Input */}
-      <div className="space-y-2">
-        <Label htmlFor="personaInput" className="text-muted-foreground">
-          Persona Input <span className="text-xs text-muted-foreground/70">(Who you help & Outcome)</span>
-        </Label>
-        <Textarea
-          id="personaInput"
-          value={personaInput}
-          onChange={(e) => setPersonaInput(e.target.value)}
-          placeholder="e.g. I am Jenesia Red, a fractional CMO who helps creators with AI content and funnels."
-          rows={3}
-          className="bg-secondary border-border focus:border-primary focus:ring-primary/20 resize-y"
-        />
-        <Button
-          type="button"
-          onClick={handleGeneratePersona}
-          disabled={isLoading || (inputMode === 'video' ? !file : !originalScriptText.trim())}
-          className="w-full h-12 text-base font-semibold bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50 glow-primary transition-all"
-        >
-          {isGeneratingPersona ? (
-            <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-          ) : (
-            <Sparkles className="w-5 h-5 mr-2" />
-          )}
-          Generate Persona
-        </Button>
-      </div>
-
       {/* CTA Dropdown */}
       <div className="space-y-3">
         <Label htmlFor="cta" className="text-muted-foreground">CTA (Call to Action)</Label>
@@ -628,6 +613,34 @@ export const VideoUploadForm = ({ onSubmit, onPersonaGenerated, paraphrasedText,
           </>
         )}
       </Button>
+
+      {/* Persona Input */}
+      <div className="space-y-2">
+        <Label htmlFor="personaInput" className="text-muted-foreground">
+          Persona Input <span className="text-xs text-muted-foreground/70">(Who you help & Outcome)</span>
+        </Label>
+        <Textarea
+          id="personaInput"
+          value={personaInput}
+          onChange={(e) => setPersonaInput(e.target.value)}
+          placeholder="e.g. I am Jenesia Red, a fractional CMO who helps creators with AI content and funnels."
+          rows={3}
+          className="bg-secondary border-border focus:border-primary focus:ring-primary/20 resize-y"
+        />
+        <Button
+          type="button"
+          onClick={handleGeneratePersona}
+          disabled={isGeneratingPersona || isLoading || !paraphrasedText}
+          className="w-full h-12 text-base font-semibold bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50 glow-primary transition-all"
+        >
+          {isGeneratingPersona ? (
+            <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+          ) : (
+            <Sparkles className="w-5 h-5 mr-2" />
+          )}
+          Generate Persona
+        </Button>
+      </div>
 
     </form>
   );
