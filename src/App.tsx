@@ -7,6 +7,7 @@ import Index from "./pages/Index";
 import ScriptGenerator from "./pages/ScriptGenerator";
 import CaptionParaphraser from "./pages/CaptionParaphraser";
 import AudioTags from "./pages/AudioTags";
+import ThumbnailHookGenerator from "./pages/ThumbnailHookGenerator";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -22,6 +23,7 @@ const App = () => (
           <Route path="/script-generator" element={<ScriptGenerator />} />
           <Route path="/caption-paraphraser" element={<CaptionParaphraser />} />
           <Route path="/audio-tags" element={<AudioTags />} />
+          <Route path="/thumbnail-hooks" element={<ThumbnailHookGenerator />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>

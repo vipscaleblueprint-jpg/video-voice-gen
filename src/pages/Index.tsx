@@ -85,6 +85,7 @@ const Index = () => {
           <NavLink to="/caption-paraphraser">Caption Paraphraser</NavLink>
           <NavLink to="/script-generator">Script Generator</NavLink>
           <NavLink to="/audio-tags">Audio Tags</NavLink>
+          <NavLink to="/thumbnail-hooks">Thumbnail Hooks</NavLink>
         </nav>
 
         {/* Header */}
