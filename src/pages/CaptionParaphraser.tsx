@@ -6,7 +6,7 @@ import { toast } from '@/hooks/use-toast';
 import { NavLink } from '@/components/NavLink';
 import { SocialCaptions } from '@/types';
 
-const API_ENDPOINT = 'https://n8n.srv1151765.hstgr.cloud/webhook/generate-caption';
+const API_ENDPOINT = 'https://n8n.srv1151765.hstgr.cloud/webhook/caption-generator';
 
 const CaptionParaphraser = () => {
     const [isLoading, setIsLoading] = useState(false);
@@ -64,8 +64,9 @@ const CaptionParaphraser = () => {
                 {/* Navigation */}
                 <nav className="flex items-center gap-4 mb-8">
                     <NavLink to="/">Reel Paraphraser</NavLink>
-                    <NavLink to="/caption-paraphraser">Caption Paraphraser</NavLink>
+                    <NavLink to="/caption-generator">Caption Generator</NavLink>
                     <NavLink to="/script-generator">Script Generator</NavLink>
+                    <NavLink to="/caption-paraphraser">Caption Paraphraser</NavLink>
                     <NavLink to="/audio-tags">Audio Tags</NavLink>
                     <NavLink to="/thumbnail-hooks">Thumbnail Hooks</NavLink>
                 </nav>

@@ -173,13 +173,13 @@ export const CaptionUploadForm = ({ onSubmit, isLoading }: CaptionUploadFormProp
       {/* Caption Input (Required) */}
       <div className="space-y-2">
         <Label htmlFor="caption" className="text-muted-foreground">
-          Caption <span className="text-destructive">*</span>
+          Script <span className="text-destructive">*</span>
         </Label>
         <Textarea
           id="caption"
           value={caption}
           onChange={(e) => setCaption(e.target.value)}
-          placeholder="Enter your caption text here..."
+          placeholder="Enter your script text here..."
           rows={4}
           className="bg-secondary border-border focus:border-primary focus:ring-primary/20 resize-y"
           required

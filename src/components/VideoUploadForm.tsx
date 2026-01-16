@@ -60,7 +60,6 @@ export const VideoUploadForm = ({ onSubmit, onPersonaGenerated, paraphrasedText,
   const [prompt, setPrompt] = useState('');
   const [contentType, setContentType] = useState('');
   const [selectedPromptTemplate, setSelectedPromptTemplate] = useState('');
-  const [context, setContext] = useState('');
   const [isDragging, setIsDragging] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [promptOptions, setPromptOptions] = useState<PromptOption[]>([]);
@@ -196,7 +195,6 @@ export const VideoUploadForm = ({ onSubmit, onPersonaGenerated, paraphrasedText,
         body: JSON.stringify({
           persona_input: personaInput,
           paraphrased: paraphrasedText || '',
-          context: context.trim()
         })
       });
 
@@ -313,7 +311,6 @@ export const VideoUploadForm = ({ onSubmit, onPersonaGenerated, paraphrasedText,
     formData.append('prompt', prompt);
     formData.append('content_type', contentType);
     formData.append('cta', selectedCta);
-    formData.append('context', context.trim());
     if (caption.trim()) {
       formData.append('caption', caption);
     }
@@ -331,20 +328,6 @@ export const VideoUploadForm = ({ onSubmit, onPersonaGenerated, paraphrasedText,
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
-      {/* Context Section */}
-      <div className="space-y-2">
-        <Label htmlFor="context" className="text-muted-foreground">
-          Context
-        </Label>
-        <Textarea
-          id="context"
-          value={context}
-          onChange={(e) => setContext(e.target.value)}
-          placeholder="Provide additional context or information for the script generation..."
-          rows={3}
-          className="bg-secondary border-border focus:border-primary focus:ring-primary/20 resize-y"
-        />
-      </div>
 
       {/* Input Mode Toggle */}
       <div className="flex gap-2 p-1 bg-secondary rounded-lg">

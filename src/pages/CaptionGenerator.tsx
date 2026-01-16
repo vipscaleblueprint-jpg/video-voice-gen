@@ -1,21 +1,20 @@
-
 import { useState } from 'react';
-import { ThumbnailHookForm, type ThumbnailHookFormPayload } from '@/components/ThumbnailHookForm';
-import { ThumbnailHookResponseDisplay } from '@/components/ThumbnailHookResponseDisplay';
-import { Zap, Loader2 } from 'lucide-react';
+import { CaptionUploadForm, type CaptionFormPayload } from '@/components/CaptionUploadForm';
+import { CaptionResponseDisplay } from '@/components/CaptionResponseDisplay';
+import { MessageSquare, Loader2 } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { NavLink } from '@/components/NavLink';
+import { SocialCaptions } from '@/types';
 
-// Placeholder endpoint - user should replace with actual if different
-const API_ENDPOINT = 'https://n8n.srv1151765.hstgr.cloud/webhook/8f78f1c8-3494-4879-8e6b-ceb98bccc961';
+const API_ENDPOINT = 'https://n8n.srv1151765.hstgr.cloud/webhook/caption-generator';
 
-const ThumbnailHookGenerator = () => {
+const CaptionGenerator = () => {
     const [isLoading, setIsLoading] = useState(false);
-    const [titles, setTitles] = useState<string[] | null>(null);
+    const [response, setResponse] = useState<SocialCaptions | null>(null);
 
-    const handleSubmit = async (payload: ThumbnailHookFormPayload) => {
+    const handleSubmit = async (payload: CaptionFormPayload) => {
         setIsLoading(true);
-        setTitles(null);
+        setResponse(null);
 
         try {
             const res = await fetch(API_ENDPOINT, {
@@ -27,63 +26,25 @@ const ThumbnailHookGenerator = () => {
             });
 
             if (!res.ok) {
-                // Determine if it is a 404 or other error to give better feedback
-                if (res.status === 404) {
-                    throw new Error('Webhook endpoint not found. Please ensure the n8n workflow is active.');
-                }
-                throw new Error(`Request failed with status ${res.status}`);
+                throw new Error(`Upload failed with status ${res.status}`);
             }
 
             const data = await res.json();
-
-            // Expected format: { "output": { "titles": ["Title 1", ...] } } or { "titles": [...] }
-            let extractedTitles: string[] = [];
-
-            if (data && data.output && data.output.titles && Array.isArray(data.output.titles)) {
-                extractedTitles = data.output.titles;
-            } else if (data && data.titles && Array.isArray(data.titles)) {
-                extractedTitles = data.titles;
-            } else if (Array.isArray(data)) {
-                // If it returns an array of strings directly
-                if (data.every(i => typeof i === 'string')) {
-                    extractedTitles = data;
-                }
-                // If it returns an array of objects (n8n standard output sometimes)
-                else if (data.length > 0 && data[0].titles) {
-                    extractedTitles = data[0].titles;
-                }
-            } else if (data && typeof data === 'object') {
-                // Try to find any array of strings
-                const values = Object.values(data);
-                for (const val of values) {
-                    if (Array.isArray(val) && val.every(v => typeof v === 'string')) {
-                        extractedTitles = val as string[];
-                        break;
-                    }
-                }
-            }
-
-            if (extractedTitles.length > 0) {
-                setTitles(extractedTitles);
-                toast({
-                    title: 'Success',
-                    description: 'Viral hooks generated successfully!',
-                });
+            // Handle the case where the API returns an array (take the first item)
+            if (Array.isArray(data) && data.length > 0) {
+                setResponse(data[0]);
             } else {
-                // Fallback display raw JSON if we can't parse it, or error
-                console.warn('Could not parse titles from response:', data);
-                toast({
-                    title: 'Warning',
-                    description: 'Received response but could not parse titles.',
-                    variant: 'destructive',
-                });
+                setResponse(data);
             }
-
+            toast({
+                title: 'Success',
+                description: 'Captions generated successfully!',
+            });
         } catch (error) {
-            console.error('API error:', error);
+            console.error('Upload error:', error);
             toast({
                 title: 'Error',
-                description: error instanceof Error ? error.message : 'Failed to generate hooks. Please try again.',
+                description: error instanceof Error ? error.message : 'Failed to generate captions. Please try again.',
                 variant: 'destructive',
             });
         } finally {
@@ -113,13 +74,13 @@ const ThumbnailHookGenerator = () => {
                 {/* Header */}
                 <div className="text-center mb-10">
                     <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-primary/20 mb-4 glow-primary">
-                        <Zap className="w-8 h-8 text-primary" />
+                        <MessageSquare className="w-8 h-8 text-primary" />
                     </div>
                     <h1 className="text-3xl md:text-4xl font-bold text-foreground mb-2">
-                        Thumbnail <span className="gradient-text">Hooks</span>
+                        Caption <span className="gradient-text">Generator</span>
                     </h1>
                     <p className="text-muted-foreground max-w-md mx-auto">
-                        Generate scroll-stopping viral hooks for your thumbnails.
+                        Generate platform-specific captions with the updated workflow.
                     </p>
                 </div>
 
@@ -127,7 +88,7 @@ const ThumbnailHookGenerator = () => {
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                     {/* Left Side - Input Form */}
                     <div className="glass rounded-2xl p-6 md:p-8 shadow-card h-fit">
-                        <ThumbnailHookForm onSubmit={handleSubmit} isLoading={isLoading} />
+                        <CaptionUploadForm onSubmit={handleSubmit} isLoading={isLoading} />
                     </div>
 
                     {/* Right Side - Response Display */}
@@ -135,15 +96,19 @@ const ThumbnailHookGenerator = () => {
                         {isLoading ? (
                             <div className="glass rounded-2xl p-6 md:p-8 shadow-card flex flex-col items-center justify-center min-h-[300px] text-center">
                                 <Loader2 className="w-12 h-12 text-primary animate-spin mb-4" />
-                                <p className="text-muted-foreground font-medium">Generating hooks...</p>
+                                <p className="text-muted-foreground font-medium">Generating captions...</p>
                                 <p className="text-xs text-muted-foreground/70 mt-2">This may take a few moments</p>
                             </div>
-                        ) : titles ? (
-                            <ThumbnailHookResponseDisplay titles={titles} />
+                        ) : response ? (
+                            <CaptionResponseDisplay
+                                captions={response}
+                                title="Generated Captions"
+                                emptyMessage="No captions were generated."
+                            />
                         ) : (
                             <div className="glass rounded-2xl p-6 md:p-8 shadow-card flex flex-col items-center justify-center min-h-[300px] text-center">
                                 <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mb-4">
-                                    <Zap className="w-8 h-8 text-muted-foreground" />
+                                    <MessageSquare className="w-8 h-8 text-muted-foreground" />
                                 </div>
                                 <p className="text-muted-foreground">
                                     Result Section
@@ -157,4 +122,4 @@ const ThumbnailHookGenerator = () => {
     );
 };
 
-export default ThumbnailHookGenerator;
+export default CaptionGenerator;
