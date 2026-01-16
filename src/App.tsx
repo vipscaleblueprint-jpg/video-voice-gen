@@ -9,6 +9,7 @@ import CaptionGenerator from "./pages/CaptionGenerator";
 import CaptionParaphraser from "./pages/CaptionParaphraser";
 import AudioTags from "./pages/AudioTags";
 import ThumbnailHookGenerator from "./pages/ThumbnailHookGenerator";
+import AdsCopyGenerator from "./pages/AdsCopyGenerator";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -26,6 +27,7 @@ const App = () => (
           <Route path="/caption-paraphraser" element={<CaptionParaphraser />} />
           <Route path="/audio-tags" element={<AudioTags />} />
           <Route path="/thumbnail-hooks" element={<ThumbnailHookGenerator />} />
+          <Route path="/ads-copy" element={<AdsCopyGenerator />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>

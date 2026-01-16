@@ -3,7 +3,7 @@ import { VideoUploadForm } from '@/components/VideoUploadForm';
 import { ResponseDisplay } from '@/components/ResponseDisplay';
 import { Film } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
-import { NavLink } from '@/components/NavLink';
+import { Navigation } from '@/components/Navigation';
 import type { SocialCaptions } from '@/types';
 
 interface ApiResponse {
@@ -80,14 +80,8 @@ const Index = () => {
 
       <div className="relative z-10 container max-w-7xl mx-auto px-4 py-12">
         {/* Navigation */}
-        <nav className="flex items-center gap-4 mb-8">
-          <NavLink to="/">Reel Paraphraser</NavLink>
-          <NavLink to="/caption-generator">Caption Generator</NavLink>
-          <NavLink to="/script-generator">Script Generator</NavLink>
-          <NavLink to="/caption-paraphraser">Caption Paraphraser</NavLink>
-          <NavLink to="/audio-tags">Audio Tags</NavLink>
-          <NavLink to="/thumbnail-hooks">Thumbnail Hooks</NavLink>
-        </nav>
+        <Navigation />
+
 
         {/* Header */}
         <div className="text-center mb-10">

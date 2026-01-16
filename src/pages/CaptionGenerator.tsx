@@ -3,7 +3,7 @@ import { CaptionUploadForm, type CaptionFormPayload } from '@/components/Caption
 import { CaptionResponseDisplay } from '@/components/CaptionResponseDisplay';
 import { MessageSquare, Loader2 } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
-import { NavLink } from '@/components/NavLink';
+import { Navigation } from '@/components/Navigation';
 import { SocialCaptions } from '@/types';
 
 const API_ENDPOINT = 'https://n8n.srv1151765.hstgr.cloud/webhook/caption-generator';
@@ -62,14 +62,7 @@ const CaptionGenerator = () => {
 
             <div className="relative z-10 container max-w-7xl mx-auto px-4 py-12">
                 {/* Navigation */}
-                <nav className="flex items-center gap-4 mb-8">
-                    <NavLink to="/">Reel Paraphraser</NavLink>
-                    <NavLink to="/caption-generator">Caption Generator</NavLink>
-                    <NavLink to="/script-generator">Script Generator</NavLink>
-                    <NavLink to="/caption-paraphraser">Caption Paraphraser</NavLink>
-                    <NavLink to="/audio-tags">Audio Tags</NavLink>
-                    <NavLink to="/thumbnail-hooks">Thumbnail Hooks</NavLink>
-                </nav>
+                <Navigation />
 
                 {/* Header */}
                 <div className="text-center mb-10">
