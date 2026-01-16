@@ -3,7 +3,8 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import Index from "./pages/Index";
+
+import ReelParaphraser from "./pages/ReelParaphraser";
 import ScriptGenerator from "./pages/ScriptGenerator";
 import CaptionGenerator from "./pages/CaptionGenerator";
 import CaptionParaphraser from "./pages/CaptionParaphraser";
@@ -21,7 +22,7 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <Routes>
-          <Route path="/" element={<Index />} />
+          <Route path="/" element={<ReelParaphraser />} />
           <Route path="/caption-generator" element={<CaptionGenerator />} />
           <Route path="/script-generator" element={<ScriptGenerator />} />
           <Route path="/caption-paraphraser" element={<CaptionParaphraser />} />
