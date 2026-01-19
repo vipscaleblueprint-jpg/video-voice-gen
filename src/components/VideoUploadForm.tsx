@@ -596,7 +596,7 @@ export const VideoUploadForm = ({ onSubmit, onPersonaGenerated, paraphrasedText,
         <Button
           type="button"
           onClick={handleGeneratePersona}
-          disabled={isGeneratingPersona || !paraphrasedText}
+          disabled={isGeneratingPersona || (!paraphrasedText && !personaInput)}
           className="w-full h-12 text-base font-semibold bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50 glow-primary transition-all"
         >
           {isGeneratingPersona ? (
