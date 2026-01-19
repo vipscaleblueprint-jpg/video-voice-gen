@@ -2,7 +2,7 @@ import { Copy, Check } from 'lucide-react';
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { toast } from '@/hooks/use-toast';
-import type { SocialCaptions, CaptionData } from '@/pages/CaptionTranscriber';
+import type { SocialCaptions, CaptionData } from '@/types';
 
 // Platform icons/labels mapping (lowercase keys)
 const PLATFORM_CONFIG: Record<string, { label: string; color: string }> = {
@@ -28,6 +28,8 @@ const PLATFORM_CONFIG: Record<string, { label: string; color: string }> = {
 
 interface CaptionResponseDisplayProps {
   captions: SocialCaptions;
+  title?: string;
+  emptyMessage?: string;
 }
 
 const CopyButton = ({ text }: { text: string }) => {
@@ -36,7 +38,7 @@ const CopyButton = ({ text }: { text: string }) => {
   const handleCopy = async () => {
     await navigator.clipboard.writeText(text);
     setCopied(true);
-    toast({ title: 'Copied!', description: 'Caption copied to clipboard.' });
+    toast({ title: 'Copied!', description: 'Content copied to clipboard.' });
     setTimeout(() => setCopied(false), 2000);
   };
 
@@ -52,16 +54,21 @@ const CopyButton = ({ text }: { text: string }) => {
   );
 };
 
-export const CaptionResponseDisplay = ({ captions }: CaptionResponseDisplayProps) => {
+export const CaptionResponseDisplay = ({
+  captions,
+  title = "Generated Captions",
+  emptyMessage = "No captions were generated."
+}: CaptionResponseDisplayProps) => {
   // Filter out empty/null/undefined captions and unknown platforms
   const validCaptions = Object.entries(captions).filter(
     ([key, value]) => {
       const platformKey = key.toLowerCase();
+      const data = value as CaptionData;
       return (
-        value &&
-        typeof value === 'object' &&
-        value.content &&
-        value.content.trim() !== '' &&
+        data &&
+        typeof data === 'object' &&
+        data.content &&
+        data.content.trim() !== '' &&
         platformKey in PLATFORM_CONFIG
       );
     }
@@ -70,7 +77,7 @@ export const CaptionResponseDisplay = ({ captions }: CaptionResponseDisplayProps
   if (validCaptions.length === 0) {
     return (
       <div className="glass rounded-2xl p-6 md:p-8 shadow-card text-center">
-        <p className="text-muted-foreground">No captions were generated.</p>
+        <p className="text-muted-foreground">{emptyMessage}</p>
       </div>
     );
   }
@@ -78,7 +85,7 @@ export const CaptionResponseDisplay = ({ captions }: CaptionResponseDisplayProps
   return (
     <div className="glass rounded-2xl p-6 md:p-8 shadow-card space-y-4">
       <h2 className="text-xl font-semibold text-foreground mb-4">
-        Generated Captions ({validCaptions.length})
+        {title} ({validCaptions.length})
       </h2>
 
       <div className="space-y-4">
@@ -90,6 +97,7 @@ export const CaptionResponseDisplay = ({ captions }: CaptionResponseDisplayProps
           const fullText = [
             data.title ? `Title: ${data.title}` : '',
             data.content,
+            data.caption ? `Caption: ${data.caption}` : '',
             data.hashtags
           ].filter(Boolean).join('\n\n');
 
@@ -124,6 +132,16 @@ export const CaptionResponseDisplay = ({ captions }: CaptionResponseDisplayProps
                   </div>
                   <p className="text-muted-foreground text-sm whitespace-pre-wrap bg-background/50 p-2 rounded-md">{data.content}</p>
                 </div>
+
+                {data.caption && (
+                  <div className="relative group">
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Caption/Hook</span>
+                      <CopyButton text={data.caption} />
+                    </div>
+                    <p className="text-muted-foreground text-sm whitespace-pre-wrap bg-background/50 p-2 rounded-md italic border-l-2 border-primary/30 pl-3">{data.caption}</p>
+                  </div>
+                )}
 
                 {data.hashtags && (
                   <div className="relative group">

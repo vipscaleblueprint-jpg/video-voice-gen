@@ -1,27 +1,18 @@
 import { useState } from 'react';
-import { CaptionUploadForm, type CaptionFormPayload } from '@/components/CaptionUploadForm';
+import { ScriptGeneratorForm, type ScriptFormPayload } from '@/components/ScriptGeneratorForm';
 import { CaptionResponseDisplay } from '@/components/CaptionResponseDisplay';
 import { MessageSquare, Loader2 } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
-import { NavLink } from '@/components/NavLink';
+import { Navigation } from '@/components/Navigation';
+import { SocialCaptions } from '@/types';
 
-export interface CaptionData {
-  content: string;
-  hashtags: string;
-  title: string;
-}
+const API_ENDPOINT = 'https://n8n.srv1151765.hstgr.cloud/webhook/generate-script';
 
-export interface SocialCaptions {
-  [key: string]: CaptionData;
-}
-
-const API_ENDPOINT = 'https://n8n.srv1151765.hstgr.cloud/webhook/caption-transcriber';
-
-const CaptionTranscriber = () => {
+const ScriptGenerator = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [response, setResponse] = useState<SocialCaptions | null>(null);
 
-  const handleSubmit = async (payload: CaptionFormPayload) => {
+  const handleSubmit = async (payload: ScriptFormPayload) => {
     setIsLoading(true);
     setResponse(null);
 
@@ -47,13 +38,13 @@ const CaptionTranscriber = () => {
       }
       toast({
         title: 'Success',
-        description: 'Captions generated successfully!',
+        description: 'Scripts generated successfully!',
       });
     } catch (error) {
       console.error('Upload error:', error);
       toast({
         title: 'Error',
-        description: error instanceof Error ? error.message : 'Failed to generate captions. Please try again.',
+        description: error instanceof Error ? error.message : 'Failed to generate scripts. Please try again.',
         variant: 'destructive',
       });
     } finally {
@@ -71,11 +62,7 @@ const CaptionTranscriber = () => {
 
       <div className="relative z-10 container max-w-7xl mx-auto px-4 py-12">
         {/* Navigation */}
-        <nav className="flex items-center gap-4 mb-8">
-          <NavLink to="/">Reel Paraphraser</NavLink>
-          <NavLink to="/caption-transcriber">Caption Generator</NavLink>
-          <NavLink to="/audio-tags">Audio Tags</NavLink>
-        </nav>
+        <Navigation />
 
         {/* Header */}
         <div className="text-center mb-10">
@@ -83,10 +70,10 @@ const CaptionTranscriber = () => {
             <MessageSquare className="w-8 h-8 text-primary" />
           </div>
           <h1 className="text-3xl md:text-4xl font-bold text-foreground mb-2">
-            Caption <span className="gradient-text">Generator</span>
+            Script <span className="gradient-text">Generator</span>
           </h1>
           <p className="text-muted-foreground max-w-md mx-auto">
-            Generate platform-specific captions for your social media content.
+            Generate platform-specific scripts for your social media content.
           </p>
         </div>
 
@@ -94,7 +81,7 @@ const CaptionTranscriber = () => {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           {/* Left Side - Input Form */}
           <div className="glass rounded-2xl p-6 md:p-8 shadow-card h-fit">
-            <CaptionUploadForm onSubmit={handleSubmit} isLoading={isLoading} />
+            <ScriptGeneratorForm onSubmit={handleSubmit} isLoading={isLoading} />
           </div>
 
           {/* Right Side - Response Display */}
@@ -102,11 +89,15 @@ const CaptionTranscriber = () => {
             {isLoading ? (
               <div className="glass rounded-2xl p-6 md:p-8 shadow-card flex flex-col items-center justify-center min-h-[300px] text-center">
                 <Loader2 className="w-12 h-12 text-primary animate-spin mb-4" />
-                <p className="text-muted-foreground font-medium">Generating captions...</p>
+                <p className="text-muted-foreground font-medium">Generating scripts...</p>
                 <p className="text-xs text-muted-foreground/70 mt-2">This may take a few moments</p>
               </div>
             ) : response ? (
-              <CaptionResponseDisplay captions={response} />
+              <CaptionResponseDisplay
+                captions={response}
+                title="Generated Scripts"
+                emptyMessage="No scripts were generated."
+              />
             ) : (
               <div className="glass rounded-2xl p-6 md:p-8 shadow-card flex flex-col items-center justify-center min-h-[300px] text-center">
                 <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mb-4">
@@ -124,4 +115,4 @@ const CaptionTranscriber = () => {
   );
 };
 
-export default CaptionTranscriber;
+export default ScriptGenerator;

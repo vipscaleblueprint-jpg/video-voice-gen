@@ -179,7 +179,7 @@ export const CaptionUploadForm = ({ onSubmit, isLoading }: CaptionUploadFormProp
           id="caption"
           value={caption}
           onChange={(e) => setCaption(e.target.value)}
-          placeholder="Enter your caption text here..."
+          placeholder="Enter your script text here..."
           rows={4}
           className="bg-secondary border-border focus:border-primary focus:ring-primary/20 resize-y"
           required

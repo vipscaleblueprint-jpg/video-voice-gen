@@ -41,6 +41,7 @@ interface CtaOption {
 const PROMPTS_API = 'https://n8n.srv1151765.hstgr.cloud/webhook/32117416-351b-4703-8ffb-931dec69efa4';
 const CTA_API = 'https://n8n.srv1151765.hstgr.cloud/webhook/e5260e03-6ded-4448-ab29-52f88af0d35b';
 const GENERATE_PERSONA_API = 'https://n8n.srv1151765.hstgr.cloud/webhook/generate-persona';
+const CAPTION_PARAPHRASE_API = 'https://n8n.srv1151765.hstgr.cloud/webhook/caption-paraphrase-single';
 
 interface VideoUploadFormProps {
   onSubmit: (formData: FormData) => Promise<void>;
@@ -71,6 +72,7 @@ export const VideoUploadForm = ({ onSubmit, onPersonaGenerated, paraphrasedText,
   const [isGeneratingPersona, setIsGeneratingPersona] = useState(false);
   const [inputMode, setInputMode] = useState<'video' | 'text'>('video');
   const [originalScriptText, setOriginalScriptText] = useState('');
+  const [isParaphrasingCaption, setIsParaphrasingCaption] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
 
@@ -149,6 +151,40 @@ export const VideoUploadForm = ({ onSubmit, onPersonaGenerated, paraphrasedText,
     if (droppedFile) handleFile(droppedFile);
   }, [handleFile]);
 
+  const handleParaphraseCaption = async () => {
+    if (!caption.trim()) return;
+
+    setIsParaphrasingCaption(true);
+    setError(null);
+    try {
+      const res = await fetch(CAPTION_PARAPHRASE_API, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ caption: caption })
+      });
+
+      if (!res.ok) throw new Error('Failed to paraphrase caption');
+
+      const data = await res.json();
+
+      // Update caption with paraphrased result
+      if (data.paraphrased_caption) {
+        setCaption(data.paraphrased_caption);
+      } else if (data.caption) {
+        setCaption(data.caption);
+      } else if (typeof data === 'string') {
+        setCaption(data);
+      } else {
+        throw new Error('Invalid response format');
+      }
+    } catch (err) {
+      console.error('Caption paraphrase error:', err);
+      setError('Failed to paraphrase caption. Please try again.');
+    } finally {
+      setIsParaphrasingCaption(false);
+    }
+  };
+
   const handleGeneratePersona = async () => {
     setIsGeneratingPersona(true);
     setError(null);
@@ -158,7 +194,7 @@ export const VideoUploadForm = ({ onSubmit, onPersonaGenerated, paraphrasedText,
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           persona_input: personaInput,
-          paraphrased: paraphrasedText || ''
+          paraphrased: paraphrasedText || '',
         })
       });
 
@@ -166,48 +202,60 @@ export const VideoUploadForm = ({ onSubmit, onPersonaGenerated, paraphrasedText,
 
       const data = await res.json();
 
-      // Parse new array response format: [{"script": {...}, "hook": "...", ...}]
+      // Parse response format
       let generatedText = '';
 
       if (Array.isArray(data) && data.length > 0) {
-        const responseData = data[0];
+        const item = data[0];
 
-        // Check if script object exists
-        if (responseData.script) {
-          const script = responseData.script;
+        // Handle format with specific keys: HOOK, PERSONA, BRIDGE_LINE, STEPS, etc.
+        if (item.HOOK || item.PERSONA || item.STEPS) {
           const sections = [];
+          if (item.HOOK) sections.push(`[HOOK]\n${item.HOOK}`);
+          if (item.PERSONA) sections.push(`[PERSONA]\n${item.PERSONA}`);
+          if (item.BRIDGE_LINE) sections.push(`[BRIDGE LINE]\n${item.BRIDGE_LINE}`);
+          if (item.CREDIBILITY_LINE) sections.push(`[CREDIBILITY LINE]\n${item.CREDIBILITY_LINE}`);
+          if (item.OPTIONAL_CREDIBILITY_REMINDER) sections.push(`[CREDIBILITY REMINDER]\n${item.OPTIONAL_CREDIBILITY_REMINDER}`);
 
-          // Add each section with its label
+          if (Array.isArray(item.STEPS)) {
+            item.STEPS.forEach((step: any) => {
+              if (step.label && step.text) {
+                sections.push(`${step.label}\n${step.text}`);
+              } else if (typeof step === 'string') {
+                sections.push(step);
+              }
+            });
+          }
+
+          if (item.CTA) sections.push(`[CTA]\n${item.CTA}`);
+          generatedText = sections.join('\n\n');
+        }
+        // Handle nest script object format
+        else if (item.script) {
+          const script = item.script;
+          const sections = [];
           if (script.HOOK) sections.push(`[HOOK]\n${script.HOOK}`);
           if (script.PERSONA) sections.push(`[PERSONA]\n${script.PERSONA}`);
           if (script['BRIDGE LINE']) sections.push(`[BRIDGE LINE]\n${script['BRIDGE LINE']}`);
-
-          // Add steps
           for (let i = 1; i <= 10; i++) {
             const stepKey = `STEP ${i}`;
-            if (script[stepKey]) {
-              sections.push(`[${stepKey}]\n${script[stepKey]}`);
-            }
+            if (script[stepKey]) sections.push(`[${stepKey}]\n${script[stepKey]}`);
           }
-
           if (script.CTA) sections.push(`[CTA]\n${script.CTA}`);
-
           generatedText = sections.join('\n\n');
-        } else if (responseData.output) {
-          generatedText = responseData.output;
+        }
+        else if (item.output) {
+          generatedText = item.output;
         }
       } else if (data.output) {
         generatedText = data.output;
       } else if (data.persona_line) {
         generatedText = data.persona_line;
-      } else if (data.text) {
-        generatedText = data.text;
       } else if (typeof data === 'string') {
         generatedText = data;
       }
 
       if (generatedText) {
-        setPersonaInput(generatedText);
         onPersonaGenerated(generatedText);
       } else {
         throw new Error('Invalid response format');
@@ -280,6 +328,7 @@ export const VideoUploadForm = ({ onSubmit, onPersonaGenerated, paraphrasedText,
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
+
       {/* Input Mode Toggle */}
       <div className="flex gap-2 p-1 bg-secondary rounded-lg">
         <Button
@@ -510,21 +559,6 @@ export const VideoUploadForm = ({ onSubmit, onPersonaGenerated, paraphrasedText,
         />
       </div>
 
-      {/* Caption (Optional) */}
-      <div className="space-y-2">
-        <Label htmlFor="caption" className="text-muted-foreground">
-          Caption <span className="text-xs text-muted-foreground/70">(Optional)</span>
-        </Label>
-        <Textarea
-          id="caption"
-          value={caption}
-          onChange={(e) => setCaption(e.target.value)}
-          placeholder="Enter a caption for the video..."
-          rows={3}
-          className="bg-secondary border-border focus:border-primary focus:ring-primary/20 resize-y"
-        />
-      </div>
-
       {/* CTA Dropdown */}
       <div className="space-y-3">
         <Label htmlFor="cta" className="text-muted-foreground">CTA (Call to Action)</Label>
@@ -596,7 +630,7 @@ export const VideoUploadForm = ({ onSubmit, onPersonaGenerated, paraphrasedText,
         <Button
           type="button"
           onClick={handleGeneratePersona}
-          disabled={isGeneratingPersona || (!paraphrasedText && !personaInput)}
+          disabled={isGeneratingPersona || !paraphrasedText}
           className="w-full h-12 text-base font-semibold bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50 glow-primary transition-all"
         >
           {isGeneratingPersona ? (
@@ -607,6 +641,7 @@ export const VideoUploadForm = ({ onSubmit, onPersonaGenerated, paraphrasedText,
           Generate Persona
         </Button>
       </div>
+
     </form>
   );
 };

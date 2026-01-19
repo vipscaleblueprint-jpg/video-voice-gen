@@ -8,7 +8,7 @@ import {
   CollapsibleTrigger,
 } from '@/components/ui/collapsible';
 import { CaptionResponseDisplay } from '@/components/CaptionResponseDisplay';
-import type { SocialCaptions } from '@/pages/CaptionTranscriber';
+import type { SocialCaptions } from '@/types';
 
 interface TimestampItem {
   text: string;
@@ -76,12 +76,14 @@ const ResponseCard = ({
   content,
   badge,
   className,
+  preserveWhitespace = false,
 }: {
   icon: React.ElementType;
   title: string;
   content: string;
   badge?: string;
   className?: string;
+  preserveWhitespace?: boolean;
 }) => (
   <div className={cn("glass rounded-xl p-5 space-y-3", className)}>
     <div className="flex items-center justify-between">
@@ -98,7 +100,10 @@ const ResponseCard = ({
       </div>
       <CopyButton text={content} />
     </div>
-    <p className="text-muted-foreground leading-relaxed text-sm">{content}</p>
+    <p className={cn(
+      "text-muted-foreground leading-relaxed text-sm",
+      preserveWhitespace && "whitespace-pre-wrap"
+    )}>{content}</p>
   </div>
 );
 
@@ -121,7 +126,8 @@ export const ResponseDisplay = ({ response }: ResponseDisplayProps) => {
       socialCaptions[platform] = {
         content: content,
         title: '',
-        hashtags: ''
+        hashtags: '',
+        caption: ''
       };
     }
   };
@@ -138,7 +144,7 @@ export const ResponseDisplay = ({ response }: ResponseDisplayProps) => {
   addPlatformCaption('threads', response.threads);
 
   const hasValidCaptions = Object.values(socialCaptions).some(
-    v => v && typeof v === 'object' && 'content' in v && v.content && v.content.trim()
+    v => v && typeof v === 'object' && 'content' in v && typeof (v as any).content === 'string' && (v as any).content.trim()
   );
 
   return (
@@ -202,15 +208,6 @@ export const ResponseDisplay = ({ response }: ResponseDisplayProps) => {
         />
       )}
 
-      {/* Caption */}
-      {response.caption && (
-        <ResponseCard
-          icon={MessageSquare}
-          title="Caption"
-          content={response.caption}
-          className="border-primary/20"
-        />
-      )}
 
       {/* Generated Persona (Displayed after all analysis results) */}
       {response.persona_line && (
@@ -219,6 +216,7 @@ export const ResponseDisplay = ({ response }: ResponseDisplayProps) => {
           title="Generated Persona"
           content={response.persona_line}
           className="border-primary/20 bg-primary/5"
+          preserveWhitespace={true}
         />
       )}
 
