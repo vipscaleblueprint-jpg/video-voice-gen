@@ -7,13 +7,19 @@ import { toast } from '@/hooks/use-toast';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
+interface PrimaryTextItem {
+    text: string;
+    cta?: string;
+}
+
 interface AdVariation {
     graphic_hook: string;
-    primary_text: string[];
+    primary_texts: PrimaryTextItem[];
     headline: string[];
     description: string[];
     hashtag?: string;
     cta?: string;
+    fallback_ctas?: string[];
 }
 
 interface AdStageData {
@@ -36,19 +42,46 @@ export const AdsResponseDisplay = ({ response }: AdsResponseDisplayProps) => {
 
     // Helper to normalize variation data
     const normalizeVariation = (data: any): AdVariation => {
-        if (!data) return { graphic_hook: '', primary_text: [], headline: [], description: [] };
+        if (!data) return { graphic_hook: '', primary_texts: [], headline: [], description: [] };
 
         // Handle nested graphic_hook_X structure
         const hookKey = Object.keys(data).find(k => k.startsWith('graphic_hook_'));
         const source = hookKey ? data[hookKey] : data;
 
+        // Normalize primary_text to array of objects
+        let primaryTexts: PrimaryTextItem[] = [];
+        const rawPrimary = source.primary_text || data.primary_text;
+
+        if (Array.isArray(rawPrimary)) {
+            primaryTexts = rawPrimary.map(item => {
+                if (typeof item === 'string') return { text: item };
+                if (typeof item === 'object' && item !== null) {
+                    return {
+                        text: item.text || item.content || '',
+                        cta: item.cta || ''
+                    };
+                }
+                return { text: String(item) };
+            });
+        } else if (rawPrimary) {
+            if (typeof rawPrimary === 'string') {
+                primaryTexts = [{ text: rawPrimary }];
+            } else if (typeof rawPrimary === 'object') {
+                primaryTexts = [{
+                    text: rawPrimary.text || rawPrimary.content || '',
+                    cta: rawPrimary.cta || ''
+                }];
+            }
+        }
+
         return {
             graphic_hook: source.graphic_hook || '',
-            primary_text: Array.isArray(source.primary_text) ? source.primary_text : (source.primary_text ? [source.primary_text] : []),
+            primary_texts: primaryTexts,
             headline: Array.isArray(source.headline) ? source.headline : (source.headline ? [source.headline] : []),
             description: Array.isArray(source.description) ? source.description : (source.description ? [source.description] : []),
             hashtag: source.hashtag || '',
-            cta: data.cta || source.cta || ''
+            cta: data.cta || source.cta || '',
+            fallback_ctas: Array.isArray(data.fallback_cta) ? data.fallback_cta : (data.fallback_cta ? [data.fallback_cta] : [])
         };
     };
 
@@ -76,8 +109,22 @@ export const AdsResponseDisplay = ({ response }: AdsResponseDisplayProps) => {
         );
     }
 
-    const handleCopy = (text: string | string[], id: string) => {
-        const textToCopy = Array.isArray(text) ? text.join('\n\n') : text;
+    const handleCopy = (text: string | string[] | any[], id: string) => {
+        let textToCopy = '';
+        if (Array.isArray(text)) {
+            textToCopy = text.map(item => {
+                if (typeof item === 'string') return item;
+                if (typeof item === 'object' && item !== null) {
+                    const t = item.text || '';
+                    const c = item.cta ? ` [CTA: ${item.cta}]` : '';
+                    return t + c;
+                }
+                return String(item);
+            }).join('\n\n');
+        } else {
+            textToCopy = String(text);
+        }
+
         if (!textToCopy) return;
         navigator.clipboard.writeText(textToCopy);
         setCopiedId(id);
@@ -139,8 +186,8 @@ export const AdsResponseDisplay = ({ response }: AdsResponseDisplayProps) => {
                     allContent += `Headlines:\n${varData.headline.map(h => `- ${h}`).join('\n')}\n\n`;
                 }
 
-                if (varData.primary_text && varData.primary_text.length > 0) {
-                    allContent += `Primary Text:\n${varData.primary_text.map(t => `- ${t}`).join('\n')}\n\n`;
+                if (varData.primary_texts && varData.primary_texts.length > 0) {
+                    allContent += `Primary Text:\n${varData.primary_texts.map(t => `- ${t.text}${t.cta ? ` [CTA: ${t.cta}]` : ''}`).join('\n')}\n\n`;
                 }
 
                 if (varData.description && varData.description.length > 0) {
@@ -148,7 +195,11 @@ export const AdsResponseDisplay = ({ response }: AdsResponseDisplayProps) => {
                 }
 
                 if (varData.cta) {
-                    allContent += `CTA: ${varData.cta}\n\n`;
+                    allContent += `Main CTA: ${varData.cta}\n\n`;
+                }
+
+                if (varData.fallback_ctas && varData.fallback_ctas.length > 0) {
+                    allContent += `Fallback CTAs: ${varData.fallback_ctas.join(', ')}\n\n`;
                 }
 
                 if (varData.hashtag) {
@@ -280,7 +331,7 @@ export const AdsResponseDisplay = ({ response }: AdsResponseDisplayProps) => {
                                     )}
 
                                     {/* Primary Text */}
-                                    {varData.primary_text && varData.primary_text.length > 0 && (
+                                    {varData.primary_texts && varData.primary_texts.length > 0 && (
                                         <div className="space-y-3">
                                             <div className="flex justify-between items-center">
                                                 <h4 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Primary Text</h4>
@@ -288,15 +339,22 @@ export const AdsResponseDisplay = ({ response }: AdsResponseDisplayProps) => {
                                                     variant="ghost"
                                                     size="sm"
                                                     className="h-8 w-8 p-0"
-                                                    onClick={() => handleCopy(varData.primary_text, `${stage.id}-${selectedVar}-primary`)}
+                                                    onClick={() => handleCopy(varData.primary_texts, `${stage.id}-${selectedVar}-primary`)}
                                                 >
                                                     {copiedId === `${stage.id}-${selectedVar}-primary` ? <Check className="h-4 w-4 text-green-500" /> : <Copy className="h-4 w-4" />}
                                                 </Button>
                                             </div>
-                                            <div className="space-y-2">
-                                                {varData.primary_text.map((text, i) => (
-                                                    <div key={i} className="p-4 rounded-lg bg-secondary/30 border border-border/50 leading-relaxed text-foreground/90">
-                                                        {text}
+                                            <div className="space-y-4">
+                                                {varData.primary_texts.map((item, i) => (
+                                                    <div key={i} className="relative p-4 rounded-lg bg-secondary/30 border border-border/50 leading-relaxed text-foreground/90 group">
+                                                        {item.text}
+                                                        {item.cta && (
+                                                            <div className="mt-2 flex justify-end">
+                                                                <Badge className="bg-primary/20 text-primary border-primary/20 text-[10px] uppercase tracking-tighter py-0 px-2 h-5">
+                                                                    CTA: {item.cta}
+                                                                </Badge>
+                                                            </div>
+                                                        )}
                                                     </div>
                                                 ))}
                                             </div>
@@ -328,7 +386,7 @@ export const AdsResponseDisplay = ({ response }: AdsResponseDisplayProps) => {
                                     )}
 
                                     {/* CTA */}
-                                    {varData.cta && (
+                                    {(varData.cta || (varData.fallback_ctas && varData.fallback_ctas.length > 0)) && (
                                         <div className="space-y-3">
                                             <div className="flex justify-between items-center">
                                                 <h4 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Call to Action (CTA)</h4>
@@ -336,14 +394,25 @@ export const AdsResponseDisplay = ({ response }: AdsResponseDisplayProps) => {
                                                     variant="ghost"
                                                     size="sm"
                                                     className="h-8 w-8 p-0"
-                                                    onClick={() => handleCopy(varData.cta || '', `${stage.id}-${selectedVar}-cta`)}
+                                                    onClick={() => handleCopy(varData.cta || varData.fallback_ctas || [], `${stage.id}-${selectedVar}-cta`)}
                                                 >
                                                     {copiedId === `${stage.id}-${selectedVar}-cta` ? <Check className="h-4 w-4 text-green-500" /> : <Copy className="h-4 w-4" />}
                                                 </Button>
                                             </div>
-                                            <div className="p-3 rounded-xl bg-orange-500/10 border border-orange-500/20 text-orange-600 dark:text-orange-400 font-bold text-center uppercase tracking-widest">
-                                                {varData.cta}
-                                            </div>
+                                            {varData.cta && (
+                                                <div className="p-3 rounded-xl bg-orange-500/10 border border-orange-500/20 text-orange-600 dark:text-orange-400 font-bold text-center uppercase tracking-widest">
+                                                    {varData.cta}
+                                                </div>
+                                            )}
+                                            {varData.fallback_ctas && varData.fallback_ctas.length > 0 && (
+                                                <div className="flex flex-wrap gap-2">
+                                                    {varData.fallback_ctas.map((fcta, idx) => (
+                                                        <Badge key={idx} variant="outline" className="bg-orange-500/5 text-orange-500 border-orange-500/20 uppercase text-[10px]">
+                                                            {fcta}
+                                                        </Badge>
+                                                    ))}
+                                                </div>
+                                            )}
                                         </div>
                                     )}
 
@@ -375,3 +444,4 @@ export const AdsResponseDisplay = ({ response }: AdsResponseDisplayProps) => {
         </div>
     );
 };
+
