@@ -5,7 +5,7 @@ import { Megaphone, Loader2 } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { Navigation } from '@/components/Navigation';
 
-const API_ENDPOINT = 'https://n8n.srv1151765.hstgr.cloud/webhook/generate-ads-caopy';
+const API_ENDPOINT = 'https://n8n.srv1151765.hstgr.cloud/webhook/generate-ads-copies';
 
 const AdsCopyGenerator = () => {
     const [isLoading, setIsLoading] = useState(false);

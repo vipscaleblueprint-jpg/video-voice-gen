@@ -12,21 +12,12 @@ interface AdVariation {
     primary_text: string[];
     headline: string[];
     description: string[];
-    hashtag: string;
+    hashtag?: string;
+    cta?: string;
 }
 
 interface AdStageData {
-    [key: string]: AdVariation; // a, b, c, d, e variations
-}
-
-interface AdsOutput {
-    ads_output: {
-        stage_1_unaware: AdStageData;
-        stage_2_problem_aware: AdStageData;
-        stage_3_solution_aware: AdStageData;
-        stage_4_product_aware: AdStageData;
-        stage_5_most_aware: AdStageData;
-    };
+    [key: string]: any; // a, b, c, d, e variations which might be nested
 }
 
 interface AdsResponseDisplayProps {
@@ -43,10 +34,30 @@ export const AdsResponseDisplay = ({ response }: AdsResponseDisplayProps) => {
         stage_5_most_aware: 'a',
     });
 
+    // Helper to normalize variation data
+    const normalizeVariation = (data: any): AdVariation => {
+        if (!data) return { graphic_hook: '', primary_text: [], headline: [], description: [] };
+
+        // Handle nested graphic_hook_X structure
+        const hookKey = Object.keys(data).find(k => k.startsWith('graphic_hook_'));
+        const source = hookKey ? data[hookKey] : data;
+
+        return {
+            graphic_hook: source.graphic_hook || '',
+            primary_text: Array.isArray(source.primary_text) ? source.primary_text : (source.primary_text ? [source.primary_text] : []),
+            headline: Array.isArray(source.headline) ? source.headline : (source.headline ? [source.headline] : []),
+            description: Array.isArray(source.description) ? source.description : (source.description ? [source.description] : []),
+            hashtag: source.hashtag || '',
+            cta: data.cta || source.cta || ''
+        };
+    };
+
     // Extract the ads output data - handle nested structure
     let adsOutput: any;
     if (response?.output?.ads_output) {
         adsOutput = response.output.ads_output;
+    } else if (response?.output) {
+        adsOutput = response.output;
     } else if (response?.ads_output) {
         adsOutput = response.ads_output;
     } else {
@@ -57,7 +68,8 @@ export const AdsResponseDisplay = ({ response }: AdsResponseDisplayProps) => {
         return (
             <div className="glass rounded-2xl p-8 text-center">
                 <p className="text-destructive font-medium mb-2">Unexpected Response Format</p>
-                <pre className="text-[10px] bg-secondary/30 p-4 mt-4 rounded-lg overflow-auto max-h-[200px] text-left">
+                <div className="text-xs text-muted-foreground mb-4">The response did not contain the expected data structure.</div>
+                <pre className="text-[10px] bg-secondary/30 p-4 rounded-lg overflow-auto max-h-[300px] text-left">
                     {JSON.stringify(response, null, 2)}
                 </pre>
             </div>
@@ -77,45 +89,116 @@ export const AdsResponseDisplay = ({ response }: AdsResponseDisplayProps) => {
     };
 
     const stages = [
-        { id: 'stage_1_unaware', label: '1. Unaware', data: adsOutput.stage_1_unaware },
-        { id: 'stage_2_problem_aware', label: '2. Problem Aware', data: adsOutput.stage_2_problem_aware },
-        { id: 'stage_3_solution_aware', label: '3. Solution Aware', data: adsOutput.stage_3_solution_aware },
-        { id: 'stage_4_product_aware', label: '4. Product Aware', data: adsOutput.stage_4_product_aware },
-        { id: 'stage_5_most_aware', label: '5. Most Aware', data: adsOutput.stage_5_most_aware },
+        { id: 'stage_1_unaware', label: '1. Unaware', data: adsOutput.stage_1_unaware || adsOutput.stage_1 },
+        { id: 'stage_2_problem_aware', label: '2. Problem Aware', data: adsOutput.stage_2_problem_aware || adsOutput.stage_2 },
+        { id: 'stage_3_solution_aware', label: '3. Solution Aware', data: adsOutput.stage_3_solution_aware || adsOutput.stage_3 },
+        { id: 'stage_4_product_aware', label: '4. Product Aware', data: adsOutput.stage_4_product_aware || adsOutput.stage_4 },
+        { id: 'stage_5_most_aware', label: '5. Most Aware', data: adsOutput.stage_5_most_aware || adsOutput.stage_5 },
     ].filter(stage => stage.data && typeof stage.data === 'object');
 
     if (stages.length === 0) {
-        return (
-            <div className="glass rounded-2xl p-8 text-center">
-                <p className="text-warning font-medium mb-2">No Ads Data Found</p>
-                <p className="text-xs text-muted-foreground">The API returned a response but no ad stages were recognized.</p>
-                <pre className="text-[10px] bg-secondary/30 p-4 mt-4 rounded-lg overflow-auto max-h-[200px] text-left">
-                    {JSON.stringify(response, null, 2)}
-                </pre>
-            </div>
-        );
+        // Try to find any keys that look like stages if the standard ones aren't found
+        const fallbackStages = Object.keys(adsOutput)
+            .filter(key => key.toLowerCase().includes('stage'))
+            .map(key => ({
+                id: key,
+                label: key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()),
+                data: adsOutput[key]
+            }));
+
+        if (fallbackStages.length > 0) {
+            stages.push(...fallbackStages);
+        } else {
+            return (
+                <div className="glass rounded-2xl p-8 text-center">
+                    <p className="text-warning font-medium mb-2">No Ads Data Found</p>
+                    <p className="text-xs text-muted-foreground">The API returned a response but no ad stages were recognized.</p>
+                    <pre className="text-[10px] bg-secondary/30 p-4 mt-4 rounded-lg overflow-auto max-h-[300px] text-left">
+                        {JSON.stringify(response, null, 2)}
+                    </pre>
+                </div>
+            );
+        }
     }
+
+    const handleCopyAll = () => {
+        let allContent = '';
+
+        stages.forEach(stage => {
+            const stageLabel = stage.label;
+            allContent += `${stageLabel.toUpperCase()}\n${'='.repeat(stageLabel.length)}\n\n`;
+
+            const variations = Object.keys(stage.data);
+            variations.forEach(varKey => {
+                const varData = normalizeVariation(stage.data[varKey]);
+                allContent += `VARIATION ${varKey.toUpperCase()}\n${'-'.repeat(10 + varKey.length)}\n`;
+
+                allContent += `Graphic Hook: ${varData.graphic_hook}\n\n`;
+
+                if (varData.headline && varData.headline.length > 0) {
+                    allContent += `Headlines:\n${varData.headline.map(h => `- ${h}`).join('\n')}\n\n`;
+                }
+
+                if (varData.primary_text && varData.primary_text.length > 0) {
+                    allContent += `Primary Text:\n${varData.primary_text.map(t => `- ${t}`).join('\n')}\n\n`;
+                }
+
+                if (varData.description && varData.description.length > 0) {
+                    allContent += `Description:\n${varData.description.map(d => `- ${d}`).join('\n')}\n\n`;
+                }
+
+                if (varData.cta) {
+                    allContent += `CTA: ${varData.cta}\n\n`;
+                }
+
+                if (varData.hashtag) {
+                    allContent += `Hashtags: ${varData.hashtag}\n\n`;
+                }
+
+                allContent += '---\n\n';
+            });
+            allContent += '\n\n';
+        });
+
+        navigator.clipboard.writeText(allContent);
+        setCopiedId('all');
+        toast({
+            title: 'All content copied',
+            description: 'All ads copy has been copied to your clipboard.',
+        });
+        setTimeout(() => setCopiedId(null), 2000);
+    };
 
     return (
         <div className="space-y-6">
-            <Tabs defaultValue="stage_1_unaware" className="w-full">
-                <TabsList className="grid grid-cols-5 w-full bg-secondary/50 p-1">
+            <div className="flex justify-end">
+                <Button
+                    variant="outline"
+                    size="sm"
+                    className="gap-2 bg-background/50 backdrop-blur-sm border-primary/20 hover:bg-primary/10 hover:text-primary transition-all duration-300"
+                    onClick={handleCopyAll}
+                >
+                    {copiedId === 'all' ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                    Copy All Results
+                </Button>
+            </div>
+
+            <Tabs defaultValue={stages[0]?.id} className="w-full">
+                <TabsList className={`grid w-full bg-secondary/50 p-1`} style={{ gridTemplateColumns: `repeat(${stages.length}, 1fr)` }}>
                     {stages.map((stage) => (
                         <TabsTrigger
                             key={stage.id}
                             value={stage.id}
-                            className="text-[10px] md:text-sm py-2 px-1 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
+                            className="text-[9px] md:text-xs py-2 px-1 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground truncate"
                         >
-                            {stage.label.split('. ')[1]}
+                            {stage.label.includes('. ') ? stage.label.split('. ')[1] : stage.label}
                         </TabsTrigger>
                     ))}
                 </TabsList>
                 {stages.map((stage) => {
                     const variations = Object.keys(stage.data);
                     const selectedVar = selectedVariations[stage.id] || variations[0];
-                    const varData = stage.data[selectedVar] as AdVariation;
-
-                    if (!varData) return null;
+                    const varData = normalizeVariation(stage.data[selectedVar]);
 
                     return (
                         <TabsContent key={stage.id} value={stage.id} className="mt-6 space-y-4">
@@ -244,6 +327,26 @@ export const AdsResponseDisplay = ({ response }: AdsResponseDisplayProps) => {
                                         </div>
                                     )}
 
+                                    {/* CTA */}
+                                    {varData.cta && (
+                                        <div className="space-y-3">
+                                            <div className="flex justify-between items-center">
+                                                <h4 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Call to Action (CTA)</h4>
+                                                <Button
+                                                    variant="ghost"
+                                                    size="sm"
+                                                    className="h-8 w-8 p-0"
+                                                    onClick={() => handleCopy(varData.cta || '', `${stage.id}-${selectedVar}-cta`)}
+                                                >
+                                                    {copiedId === `${stage.id}-${selectedVar}-cta` ? <Check className="h-4 w-4 text-green-500" /> : <Copy className="h-4 w-4" />}
+                                                </Button>
+                                            </div>
+                                            <div className="p-3 rounded-xl bg-orange-500/10 border border-orange-500/20 text-orange-600 dark:text-orange-400 font-bold text-center uppercase tracking-widest">
+                                                {varData.cta}
+                                            </div>
+                                        </div>
+                                    )}
+
                                     {/* Hashtags */}
                                     {varData.hashtag && (
                                         <div className="space-y-3">
@@ -253,7 +356,7 @@ export const AdsResponseDisplay = ({ response }: AdsResponseDisplayProps) => {
                                                     variant="ghost"
                                                     size="sm"
                                                     className="h-8 w-8 p-0"
-                                                    onClick={() => handleCopy(varData.hashtag, `${stage.id}-${selectedVar}-tag`)}
+                                                    onClick={() => handleCopy(varData.hashtag || '', `${stage.id}-${selectedVar}-tag`)}
                                                 >
                                                     {copiedId === `${stage.id}-${selectedVar}-tag` ? <Check className="h-4 w-4 text-green-500" /> : <Copy className="h-4 w-4" />}
                                                 </Button>

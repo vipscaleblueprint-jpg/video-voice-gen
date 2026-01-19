@@ -4,7 +4,10 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Loader2, Send } from 'lucide-react';
 
+import { Input } from '@/components/ui/input';
+
 export interface AdsCopyFormPayload {
+    product: string;
     vps: string;
     goal: string;
     target_market: string;
@@ -16,6 +19,7 @@ interface AdsCopyFormProps {
 }
 
 export const AdsCopyForm = ({ onSubmit, isLoading }: AdsCopyFormProps) => {
+    const [product, setProduct] = useState('');
     const [vps, setVps] = useState('');
     const [goal, setGoal] = useState('');
     const [targetMarket, setTargetMarket] = useState('');
@@ -23,6 +27,7 @@ export const AdsCopyForm = ({ onSubmit, isLoading }: AdsCopyFormProps) => {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         await onSubmit({
+            product,
             vps,
             goal,
             target_market: targetMarket,
@@ -69,6 +74,20 @@ export const AdsCopyForm = ({ onSubmit, isLoading }: AdsCopyFormProps) => {
                     onChange={(e) => setTargetMarket(e.target.value)}
                     placeholder="Describe your ideal audience..."
                     className="bg-secondary border-border focus:border-primary focus:ring-primary/20 min-h-[100px] resize-y"
+                    required
+                />
+            </div>
+
+            <div className="space-y-2">
+                <Label htmlFor="product" className="text-muted-foreground uppercase text-xs font-bold tracking-wider">
+                    Product / Service Name
+                </Label>
+                <Input
+                    id="product"
+                    value={product}
+                    onChange={(e) => setProduct(e.target.value)}
+                    placeholder="e.g. Acme Analytics Pro"
+                    className="bg-secondary border-border focus:border-primary focus:ring-primary/20 h-12"
                     required
                 />
             </div>
