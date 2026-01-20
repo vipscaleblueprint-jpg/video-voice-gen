@@ -16,9 +16,11 @@ export interface AdsCopyFormPayload {
 interface AdsCopyFormProps {
     onSubmit: (payload: AdsCopyFormPayload) => Promise<void>;
     isLoading: boolean;
+    ctaLink: string;
+    onCtaLinkChange: (value: string) => void;
 }
 
-export const AdsCopyForm = ({ onSubmit, isLoading }: AdsCopyFormProps) => {
+export const AdsCopyForm = ({ onSubmit, isLoading, ctaLink, onCtaLinkChange }: AdsCopyFormProps) => {
     const [product, setProduct] = useState('');
     const [vps, setVps] = useState('');
     const [goal, setGoal] = useState('');
@@ -89,6 +91,19 @@ export const AdsCopyForm = ({ onSubmit, isLoading }: AdsCopyFormProps) => {
                     placeholder="e.g. Acme Analytics Pro"
                     className="bg-secondary border-border focus:border-primary focus:ring-primary/20 h-12"
                     required
+                />
+            </div>
+
+            <div className="space-y-2">
+                <Label htmlFor="ctaLink" className="text-muted-foreground uppercase text-xs font-bold tracking-wider">
+                    CTA Link (Optional)
+                </Label>
+                <Input
+                    id="ctaLink"
+                    value={ctaLink}
+                    onChange={(e) => onCtaLinkChange(e.target.value)}
+                    placeholder="e.g. https://example.com/signup"
+                    className="bg-secondary border-border focus:border-primary focus:ring-primary/20 h-12"
                 />
             </div>
 

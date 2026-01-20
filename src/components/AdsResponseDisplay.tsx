@@ -28,9 +28,10 @@ interface AdStageData {
 
 interface AdsResponseDisplayProps {
     response: any;
+    ctaLink?: string;
 }
 
-export const AdsResponseDisplay = ({ response }: AdsResponseDisplayProps) => {
+export const AdsResponseDisplay = ({ response, ctaLink }: AdsResponseDisplayProps) => {
     const [copiedId, setCopiedId] = useState<string | null>(null);
     const [selectedVariations, setSelectedVariations] = useState<Record<string, string>>({
         stage_1_unaware: 'a',
@@ -116,8 +117,9 @@ export const AdsResponseDisplay = ({ response }: AdsResponseDisplayProps) => {
                 if (typeof item === 'string') return item;
                 if (typeof item === 'object' && item !== null) {
                     const t = item.text || '';
-                    const c = item.cta ? ` [CTA: ${item.cta}]` : '';
-                    return t + c;
+                    const c = item.cta ? `\nCTA: ${item.cta}` : '';
+                    const l = (item.cta && ctaLink) ? `\nLink: ${ctaLink}` : '';
+                    return t + c + l;
                 }
                 return String(item);
             }).join('\n\n');
@@ -187,7 +189,12 @@ export const AdsResponseDisplay = ({ response }: AdsResponseDisplayProps) => {
                 }
 
                 if (varData.primary_texts && varData.primary_texts.length > 0) {
-                    allContent += `Primary Text:\n${varData.primary_texts.map(t => `- ${t.text}${t.cta ? ` [CTA: ${t.cta}]` : ''}`).join('\n')}\n\n`;
+                    const formattedTexts = varData.primary_texts.map(t => {
+                        const c = t.cta ? `\nCTA: ${t.cta}` : '';
+                        const l = (t.cta && ctaLink) ? `\nLink: ${ctaLink}` : '';
+                        return `${t.text}${c}${l}`;
+                    }).join('\n\n');
+                    allContent += `Primary Text:\n${formattedTexts}\n\n`;
                 }
 
                 if (varData.description && varData.description.length > 0) {
@@ -349,10 +356,15 @@ export const AdsResponseDisplay = ({ response }: AdsResponseDisplayProps) => {
                                                     <div key={i} className="relative p-4 rounded-lg bg-secondary/30 border border-border/50 leading-relaxed text-foreground/90 group">
                                                         {item.text}
                                                         {item.cta && (
-                                                            <div className="mt-2 flex justify-end">
+                                                            <div className="mt-2 flex flex-col items-end gap-1">
                                                                 <Badge className="bg-primary/20 text-primary border-primary/20 text-[10px] uppercase tracking-tighter py-0 px-2 h-5">
                                                                     CTA: {item.cta}
                                                                 </Badge>
+                                                                {ctaLink && (
+                                                                    <span className="text-[10px] text-muted-foreground truncate max-w-full">
+                                                                        {ctaLink}
+                                                                    </span>
+                                                                )}
                                                             </div>
                                                         )}
                                                     </div>

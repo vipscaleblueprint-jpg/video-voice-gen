@@ -10,6 +10,7 @@ const API_ENDPOINT = 'https://n8n.srv1151765.hstgr.cloud/webhook/generate-ads-co
 const AdsCopyGenerator = () => {
     const [isLoading, setIsLoading] = useState(false);
     const [response, setResponse] = useState<any | null>(null);
+    const [ctaLink, setCtaLink] = useState('');
 
     const handleSubmit = async (payload: AdsCopyFormPayload) => {
         setIsLoading(true);
@@ -80,7 +81,12 @@ const AdsCopyGenerator = () => {
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                     {/* Left Side - Input Form */}
                     <div className="glass rounded-2xl p-6 md:p-8 shadow-card h-fit">
-                        <AdsCopyForm onSubmit={handleSubmit} isLoading={isLoading} />
+                        <AdsCopyForm
+                            onSubmit={handleSubmit}
+                            isLoading={isLoading}
+                            ctaLink={ctaLink}
+                            onCtaLinkChange={setCtaLink}
+                        />
                     </div>
 
                     {/* Right Side - Response Display */}
@@ -92,7 +98,7 @@ const AdsCopyGenerator = () => {
                                 <p className="text-xs text-muted-foreground/70 mt-2">This may take a few moments</p>
                             </div>
                         ) : response ? (
-                            <AdsResponseDisplay response={response} />
+                            <AdsResponseDisplay response={response} ctaLink={ctaLink} />
                         ) : (
                             <div className="glass rounded-2xl p-6 md:p-8 shadow-card flex flex-col items-center justify-center min-h-[300px] text-center">
                                 <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mb-4">
