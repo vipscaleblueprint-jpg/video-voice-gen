@@ -3,6 +3,7 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { Navigation } from "@/components/Navigation";
 
 import ReelParaphraser from "./pages/ReelParaphraser";
 import ScriptGenerator from "./pages/ScriptGenerator";
@@ -11,6 +12,7 @@ import CaptionParaphraser from "./pages/CaptionParaphraser";
 import AudioTags from "./pages/AudioTags";
 import ThumbnailHookGenerator from "./pages/ThumbnailHookGenerator";
 import AdsCopyGenerator from "./pages/AdsCopyGenerator";
+import ContentCreationSystem from "./pages/ContentCreationSystem";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -21,6 +23,7 @@ const App = () => (
       <Toaster />
       <Sonner />
       <BrowserRouter>
+        <Navigation />
         <Routes>
           <Route path="/" element={<ReelParaphraser />} />
           <Route path="/caption-generator" element={<CaptionGenerator />} />
@@ -29,6 +32,7 @@ const App = () => (
           <Route path="/audio-tags" element={<AudioTags />} />
           <Route path="/thumbnail-hooks" element={<ThumbnailHookGenerator />} />
           <Route path="/ads-copy" element={<AdsCopyGenerator />} />
+          <Route path="/content-creation" element={<ContentCreationSystem />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>

@@ -3,7 +3,6 @@ import { VideoUploadForm } from '@/components/VideoUploadForm';
 import { ResponseDisplay } from '@/components/ResponseDisplay';
 import { Video, Loader2 } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
-import { Navigation } from '@/components/Navigation';
 
 const API_ENDPOINT = 'https://n8n.srv1151765.hstgr.cloud/webhook/paraphrase-reel';
 
@@ -62,7 +61,7 @@ const ReelParaphraser = () => {
     };
 
     return (
-        <div className="min-h-screen bg-background relative overflow-hidden">
+        <div className="min-h-screen bg-background relative overflow-hidden lg:pl-64">
             {/* Background Effects */}
             <div className="absolute inset-0 overflow-hidden pointer-events-none">
                 <div className="absolute top-0 left-1/4 w-96 h-96 bg-primary/5 rounded-full blur-3xl" />
@@ -70,9 +69,6 @@ const ReelParaphraser = () => {
             </div>
 
             <div className="relative z-10 container max-w-7xl mx-auto px-4 py-12">
-                {/* Navigation */}
-                <Navigation />
-
                 {/* Header */}
                 <div className="text-center mb-10">
                     <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-primary/20 mb-4 glow-primary">

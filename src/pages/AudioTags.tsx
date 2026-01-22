@@ -3,7 +3,6 @@ import { AudioTagsForm, type AudioTagsFormPayload } from '@/components/AudioTags
 import { AudioTagsResponseDisplay } from '@/components/AudioTagsResponseDisplay';
 import { Mic, Loader2 } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
-import { Navigation } from '@/components/Navigation';
 
 const API_ENDPOINT = 'https://n8n.srv1151765.hstgr.cloud/webhook/audio-tags';
 
@@ -93,7 +92,7 @@ const AudioTags = () => {
     };
 
     return (
-        <div className="min-h-screen bg-background relative overflow-hidden">
+        <div className="min-h-screen bg-background relative overflow-hidden lg:pl-64">
             {/* Background Effects */}
             <div className="absolute inset-0 overflow-hidden pointer-events-none">
                 <div className="absolute top-0 left-1/4 w-96 h-96 bg-primary/5 rounded-full blur-3xl" />
@@ -102,7 +101,7 @@ const AudioTags = () => {
 
             <div className="relative z-10 container max-w-7xl mx-auto px-4 py-12">
                 {/* Navigation */}
-                <Navigation />
+
 
                 {/* Header */}
                 <div className="text-center mb-10">
