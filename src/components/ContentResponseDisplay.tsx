@@ -1,9 +1,10 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Copy, Check } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { toast } from '@/hooks/use-toast';
 
 interface ContentResponse {
+    // Current simple structure (keeping for backward compatibility or direct usage)
     textOverlay?: string[];
     bRollSuggestions?: string[];
     carouselTitle?: string;
@@ -12,27 +13,78 @@ interface ContentResponse {
         subheadline: string;
     }>;
     rawOutput?: string;
+    // New nested structure from webhook
+    output?: {
+        textOverlay?: Record<string, string>;
+        bRollSuggestions?: Record<string, string>;
+    };
 }
 
 interface ContentResponseDisplayProps {
-    response: ContentResponse;
+    response: ContentResponse | ContentResponse[];
     format: 'looping-video' | 'carousel';
 }
 
 export const ContentResponseDisplay = ({ response, format }: ContentResponseDisplayProps) => {
     const [copied, setCopied] = useState(false);
 
+    const parsedContent = useMemo(() => {
+        // Handle array response (common from webhooks)
+        const data = Array.isArray(response) ? response[0] : response;
+
+        if (!data) return null;
+
+        if (format === 'looping-video') {
+            let overlayLines: string[] = [];
+            let bRolls: string[] = [];
+
+            // Case 1: Nested webhook structure
+            if (data.output?.textOverlay) {
+                // Extract lines safely, filtering out empty ones
+                overlayLines = Object.values(data.output.textOverlay).filter(Boolean);
+            }
+            // Case 2: Direct array structure (legacy support)
+            else if (data.textOverlay && Array.isArray(data.textOverlay)) {
+                overlayLines = data.textOverlay;
+            }
+
+            // Extract B-Rolls
+            if (data.output?.bRollSuggestions) {
+                bRolls = Object.values(data.output.bRollSuggestions).filter(Boolean);
+            } else if (data.bRollSuggestions && Array.isArray(data.bRollSuggestions)) {
+                bRolls = data.bRollSuggestions;
+            }
+
+            return {
+                type: 'looping-video',
+                textOverlay: overlayLines,
+                bRollSuggestions: bRolls
+            };
+        }
+
+        if (format === 'carousel') {
+            // Basic support for carousel structure (can be enhanced if specific JSON provided)
+            return {
+                type: 'carousel',
+                title: data.carouselTitle,
+                slides: data.slides
+            };
+        }
+
+        return { type: 'unknown', raw: data };
+    }, [response, format]);
+
     const handleCopy = () => {
         let textToCopy = '';
 
-        if (format === 'looping-video' && response.textOverlay) {
-            textToCopy = `Text Overlay:\n${response.textOverlay.join('\n')}\n\nB-Roll Suggestions:\n${response.bRollSuggestions?.map(s => `- ${s}`).join('\n') || ''}`;
-        } else if (format === 'carousel' && response.slides) {
-            textToCopy = `Carousel Title:\n${response.carouselTitle || ''}\n\n${response.slides.map((slide, idx) =>
+        if (parsedContent?.type === 'looping-video') {
+            textToCopy = `Text Overlay:\n${parsedContent.textOverlay.join('\n')}\n\nB-Roll Suggestions:\n${parsedContent.bRollSuggestions.map(s => `- ${s}`).join('\n')}`;
+        } else if (parsedContent?.type === 'carousel' && parsedContent.slides) {
+            textToCopy = `Carousel Title:\n${parsedContent.title || ''}\n\n${parsedContent.slides.map((slide, idx) =>
                 `Slide ${idx + 1}\nHeadline: ${slide.headline}\nSubheadline: ${slide.subheadline}`
             ).join('\n\n')}`;
-        } else if (response.rawOutput) {
-            textToCopy = response.rawOutput;
+        } else if (response) {
+            textToCopy = JSON.stringify(response, null, 2);
         }
 
         navigator.clipboard.writeText(textToCopy);
@@ -43,6 +95,8 @@ export const ContentResponseDisplay = ({ response, format }: ContentResponseDisp
         });
         setTimeout(() => setCopied(false), 2000);
     };
+
+    if (!parsedContent) return null;
 
     return (
         <div className="glass rounded-2xl p-6 md:p-8 shadow-card">
@@ -68,13 +122,13 @@ export const ContentResponseDisplay = ({ response, format }: ContentResponseDisp
                 </Button>
             </div>
 
-            {format === 'looping-video' && response.textOverlay ? (
+            {parsedContent.type === 'looping-video' && parsedContent.textOverlay.length > 0 ? (
                 <div className="space-y-6">
                     {/* Text Overlay Section */}
                     <div>
                         <h4 className="text-sm font-semibold text-primary mb-3">Text Overlay:</h4>
                         <div className="bg-muted/20 rounded-xl p-4 space-y-2">
-                            {response.textOverlay.map((line, idx) => (
+                            {parsedContent.textOverlay.map((line, idx) => (
                                 <p key={idx} className="text-foreground leading-relaxed">
                                     {line}
                                 </p>
@@ -83,12 +137,12 @@ export const ContentResponseDisplay = ({ response, format }: ContentResponseDisp
                     </div>
 
                     {/* B-Roll Suggestions */}
-                    {response.bRollSuggestions && response.bRollSuggestions.length > 0 && (
+                    {parsedContent.bRollSuggestions.length > 0 && (
                         <div>
                             <h4 className="text-sm font-semibold text-primary mb-3">B-Roll Suggestions:</h4>
                             <div className="bg-muted/20 rounded-xl p-4">
                                 <ul className="space-y-2">
-                                    {response.bRollSuggestions.map((suggestion, idx) => (
+                                    {parsedContent.bRollSuggestions.map((suggestion, idx) => (
                                         <li key={idx} className="text-foreground flex items-start">
                                             <span className="text-primary mr-2">•</span>
                                             <span>{suggestion}</span>
@@ -99,14 +153,14 @@ export const ContentResponseDisplay = ({ response, format }: ContentResponseDisp
                         </div>
                     )}
                 </div>
-            ) : format === 'carousel' && response.slides ? (
+            ) : parsedContent.type === 'carousel' && parsedContent.slides ? (
                 <div className="space-y-6">
                     {/* Carousel Title */}
-                    {response.carouselTitle && (
+                    {parsedContent.title && (
                         <div>
                             <h4 className="text-sm font-semibold text-primary mb-3">Carousel Title:</h4>
                             <div className="bg-muted/20 rounded-xl p-4">
-                                <p className="text-lg font-bold text-foreground">{response.carouselTitle}</p>
+                                <p className="text-lg font-bold text-foreground">{parsedContent.title}</p>
                             </div>
                         </div>
                     )}
@@ -115,14 +169,14 @@ export const ContentResponseDisplay = ({ response, format }: ContentResponseDisp
                     <div>
                         <h4 className="text-sm font-semibold text-primary mb-3">Slides:</h4>
                         <div className="space-y-4">
-                            {response.slides.map((slide, idx) => (
+                            {parsedContent.slides.map((slide, idx) => (
                                 <div key={idx} className="bg-muted/20 rounded-xl p-4 border border-border/50">
                                     <div className="flex items-center gap-2 mb-3">
                                         <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center">
                                             <span className="text-sm font-bold text-primary">{idx + 1}</span>
                                         </div>
                                         <span className="text-xs text-muted-foreground">
-                                            {idx === response.slides!.length - 1 ? 'CTA Slide' : `Slide ${idx + 1}`}
+                                            {idx === parsedContent.slides!.length - 1 ? 'CTA Slide' : `Slide ${idx + 1}`}
                                         </span>
                                     </div>
                                     <p className="text-foreground font-semibold mb-2">{slide.headline}</p>
@@ -135,7 +189,7 @@ export const ContentResponseDisplay = ({ response, format }: ContentResponseDisp
             ) : (
                 <div className="bg-muted/20 rounded-xl p-4">
                     <pre className="whitespace-pre-wrap text-sm text-foreground font-mono">
-                        {response.rawOutput || JSON.stringify(response, null, 2)}
+                        {JSON.stringify(response, null, 2)}
                     </pre>
                 </div>
             )}
