@@ -14,7 +14,7 @@ interface ContentResponse {
     }>;
     rawOutput?: string;
     // New nested structure from webhook
-    output?: {
+    output?: string | {
         textOverlay?: Record<string, string>;
         bRollSuggestions?: Record<string, string>;
     };
@@ -39,9 +39,9 @@ export const ContentResponseDisplay = ({ response, format }: ContentResponseDisp
             let bRolls: string[] = [];
 
             // Case 1: Nested webhook structure
-            if (data.output?.textOverlay) {
+            if (data.output && typeof data.output !== 'string' && data.output.textOverlay) {
                 // Extract lines safely, filtering out empty ones
-                overlayLines = Object.values(data.output.textOverlay).filter(Boolean);
+                overlayLines = Object.values(data.output.textOverlay).filter(Boolean) as string[];
             }
             // Case 2: Direct array structure (legacy support)
             else if (data.textOverlay && Array.isArray(data.textOverlay)) {
@@ -49,8 +49,8 @@ export const ContentResponseDisplay = ({ response, format }: ContentResponseDisp
             }
 
             // Extract B-Rolls
-            if (data.output?.bRollSuggestions) {
-                bRolls = Object.values(data.output.bRollSuggestions).filter(Boolean);
+            if (data.output && typeof data.output !== 'string' && data.output.bRollSuggestions) {
+                bRolls = Object.values(data.output.bRollSuggestions).filter(Boolean) as string[];
             } else if (data.bRollSuggestions && Array.isArray(data.bRollSuggestions)) {
                 bRolls = data.bRollSuggestions;
             }
@@ -63,7 +63,37 @@ export const ContentResponseDisplay = ({ response, format }: ContentResponseDisp
         }
 
         if (format === 'carousel') {
-            // Basic support for carousel structure (can be enhanced if specific JSON provided)
+            // Case 1: Nested markdown JSON string (from user sample)
+            if (typeof data.output === 'string') {
+                try {
+                    // Robustly remove markdown code block markers from start and end only
+                    const cleanJson = data.output.replace(/^```(?:json)?\s*|\s*```$/gi, '').trim();
+                    const parsed = JSON.parse(cleanJson);
+
+                    if (parsed.carouselTitle || parsed.slides) {
+                        return {
+                            type: 'carousel',
+                            title: parsed.carouselTitle,
+                            slides: parsed.slides
+                        };
+                    }
+                } catch (e) {
+                    console.error("Failed to parse carousel JSON", e);
+                    // Fallback: try parsing the original string in case it was already JSON
+                    try {
+                        const parsed = JSON.parse(data.output);
+                        if (parsed.carouselTitle || parsed.slides) {
+                            return {
+                                type: 'carousel',
+                                title: parsed.carouselTitle,
+                                slides: parsed.slides
+                            };
+                        }
+                    } catch (e2) { /* Ignore fallback error */ }
+                }
+            }
+
+            // Case 2: Direct property access (fallback)
             return {
                 type: 'carousel',
                 title: data.carouselTitle,
