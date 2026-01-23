@@ -11,7 +11,8 @@ import {
     Megaphone,
     Menu,
     X,
-    FileText
+    FileText,
+    Target
 } from 'lucide-react';
 
 const navItems = [
@@ -22,6 +23,7 @@ const navItems = [
     { to: '/audio-tags', label: 'Audio Tags', icon: Music },
     { to: '/thumbnail-hooks', label: 'Thumbnail Hooks', icon: Image },
     { to: '/ads-copy', label: 'Ads Copy', icon: Megaphone },
+    { to: '/vps-generator', label: 'VPS Generator', icon: Target },
     { to: '/content-creation', label: 'Content Creation System', icon: FileText },
 ];
 
