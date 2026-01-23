@@ -4,6 +4,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { Navigation } from "@/components/Navigation";
+import { Header } from "@/components/Header";
 
 import ReelParaphraser from "./pages/ReelParaphraser";
 import ScriptGenerator from "./pages/ScriptGenerator";
@@ -24,6 +25,7 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <Navigation />
+        <Header />
         <Routes>
           <Route path="/" element={<ReelParaphraser />} />
           <Route path="/caption-generator" element={<CaptionGenerator />} />

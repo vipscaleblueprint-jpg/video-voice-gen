@@ -16,9 +16,9 @@ import {
 
 const navItems = [
     { to: '/', label: 'Reel Paraphraser', icon: Video },
-    { to: '/caption-generator', label: 'Caption Generator', icon: Type },
-    { to: '/script-generator', label: 'Script Generator', icon: ScrollText },
     { to: '/caption-paraphraser', label: 'Caption Paraphraser', icon: MessageSquareText },
+    { to: '/script-generator', label: 'Script Generator', icon: ScrollText },
+    { to: '/caption-generator', label: 'Caption Generator', icon: Type },
     { to: '/audio-tags', label: 'Audio Tags', icon: Music },
     { to: '/thumbnail-hooks', label: 'Thumbnail Hooks', icon: Image },
     { to: '/ads-copy', label: 'Ads Copy', icon: Megaphone },

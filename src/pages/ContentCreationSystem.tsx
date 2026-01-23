@@ -47,6 +47,119 @@ const ContentCreationSystem = () => {
         referenceText: ''
     });
 
+    // New State for Persona Generator
+    const [personaInput, setPersonaInput] = useState('');
+    const [isSuggestingPersona, setIsSuggestingPersona] = useState(false);
+    const [autoFilledFields, setAutoFilledFields] = useState<Record<string, boolean>>({});
+
+    const handleSuggestPersona = async () => {
+        setIsSuggestingPersona(true);
+        try {
+            const API_ENDPOINT = 'https://n8n.srv1151765.hstgr.cloud/webhook/suggest-persona';
+
+            const res = await fetch(API_ENDPOINT, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    persona: personaInput,
+                    format: activeSection
+                }),
+            });
+
+            if (!res.ok) {
+                throw new Error(`Request failed with status ${res.status}`);
+            }
+
+            let data = await res.json();
+
+            // Handle array response
+            if (Array.isArray(data) && data.length > 0) {
+                data = data[0];
+            }
+
+            if (data && typeof data === 'object') {
+                // Map the verbose keys from the webhook to our internal state keys
+                const mappedData = {
+                    clientName: data['Client Name'] || data.clientName,
+                    clientRole: data['Client Role / Title'] || data.clientRole,
+                    clientNiche: data['Client Niche'] || data.clientNiche,
+                    targetAudience: data['Target Audience'] || data.targetAudience,
+                    audiencePainPoint: data['Primary Audience Pain Point'] || data.audiencePainPoint,
+                    desiredOutcome: data['Primary Desired Outcome'] || data.desiredOutcome,
+                    offerCta: data['Offer / CTA'] || data.offerCta,
+                    tone: data['Tone'] || data.tone,
+                    contentPillar: data['Content Pillar'] || data.contentPillar
+                };
+
+                // Normalize Tone
+                let normalizedTone: Tone = inputs.tone;
+                if (mappedData.tone) {
+                    const toneString = mappedData.tone.toLowerCase().trim();
+                    const allowedTones: Tone[] = ['Calm', 'Bold', 'Direct', 'Aspirational', 'Educational'];
+                    const foundTone = allowedTones.find(t => t.toLowerCase() === toneString);
+                    if (foundTone) {
+                        normalizedTone = foundTone;
+                    }
+                }
+
+                setInputs(prev => ({
+                    ...prev,
+                    clientName: mappedData.clientName || prev.clientName,
+                    clientRole: mappedData.clientRole || prev.clientRole,
+                    clientNiche: mappedData.clientNiche || prev.clientNiche,
+                    targetAudience: mappedData.targetAudience || prev.targetAudience,
+                    audiencePainPoint: mappedData.audiencePainPoint || prev.audiencePainPoint,
+                    desiredOutcome: mappedData.desiredOutcome || prev.desiredOutcome,
+                    offerCta: mappedData.offerCta || prev.offerCta,
+                    tone: normalizedTone,
+                }));
+
+                // Mark fields as auto-filled
+                const newAutoFilled: Record<string, boolean> = {};
+                Object.keys(mappedData).forEach(key => {
+                    if (mappedData[key as keyof typeof mappedData]) {
+                        newAutoFilled[key] = true;
+                    }
+                });
+                setAutoFilledFields(newAutoFilled);
+
+                // Handle Content Pillar mapping
+                if (mappedData.contentPillar) {
+                    const pillarString = mappedData.contentPillar.toLowerCase().trim();
+
+                    // Combine all pillars to search through
+                    const allPillars = [...loopingVideoPillars, ...carouselPillars];
+
+                    const foundPillar = allPillars.find(p =>
+                        p.label.toLowerCase() === pillarString ||
+                        p.value.toLowerCase() === pillarString
+                    );
+
+                    if (foundPillar) {
+                        setSelectedPillar(foundPillar.value);
+                        setAutoFilledFields(prev => ({ ...prev, contentPillar: true }));
+                    }
+                }
+            }
+
+            toast({
+                title: 'Persona Analyzed',
+                description: 'Client details have been updated based on the persona.',
+            });
+        } catch (error) {
+            console.error('Persona usage error:', error);
+            toast({
+                title: 'Error',
+                description: 'Failed to analyze persona. Please try again.',
+                variant: 'destructive',
+            });
+        } finally {
+            setIsSuggestingPersona(false);
+        }
+    };
+
     const loopingVideoPillars: { value: LoopingVideoPillar; label: string }[] = [
         { value: 'bts-pain-points', label: 'BTS / Pain Points' },
         { value: 'storytelling-motivational', label: 'Storytelling – Motivational' },
@@ -107,6 +220,14 @@ const ContentCreationSystem = () => {
 
     const updateInput = (field: keyof UniversalInputs, value: string) => {
         setInputs(prev => ({ ...prev, [field]: value }));
+        // Remove auto-filled status when user manually edits
+        if (autoFilledFields[field]) {
+            setAutoFilledFields(prev => {
+                const next = { ...prev };
+                delete next[field];
+                return next;
+            });
+        }
     };
 
     return (
@@ -135,8 +256,24 @@ const ContentCreationSystem = () => {
                 <div className="glass rounded-2xl p-2 mb-8 inline-flex w-full max-w-md mx-auto">
                     <button
                         onClick={() => {
-                            setActiveSection('looping-video');
-                            setSelectedPillar('bts-pain-points');
+                            if (activeSection !== 'looping-video') {
+                                setActiveSection('looping-video');
+                                setSelectedPillar('bts-pain-points');
+                                setResponse(null);
+                                setAutoFilledFields({});
+                                setInputs({
+                                    clientName: '',
+                                    clientRole: '',
+                                    clientNiche: '',
+                                    targetAudience: '',
+                                    audiencePainPoint: '',
+                                    desiredOutcome: '',
+                                    offerCta: '',
+                                    tone: 'Direct',
+                                    format: 'looping-video',
+                                    referenceText: ''
+                                });
+                            }
                         }}
                         className={`flex-1 px-6 py-3 rounded-xl text-sm font-medium transition-all duration-300 ${activeSection === 'looping-video'
                             ? 'bg-primary text-primary-foreground shadow-glow'
@@ -147,8 +284,24 @@ const ContentCreationSystem = () => {
                     </button>
                     <button
                         onClick={() => {
-                            setActiveSection('carousel');
-                            setSelectedPillar('founders-journey');
+                            if (activeSection !== 'carousel') {
+                                setActiveSection('carousel');
+                                setSelectedPillar('founders-journey');
+                                setResponse(null);
+                                setAutoFilledFields({});
+                                setInputs({
+                                    clientName: '',
+                                    clientRole: '',
+                                    clientNiche: '',
+                                    targetAudience: '',
+                                    audiencePainPoint: '',
+                                    desiredOutcome: '',
+                                    offerCta: '',
+                                    tone: 'Direct',
+                                    format: 'carousel',
+                                    referenceText: ''
+                                });
+                            }
                         }}
                         className={`flex-1 px-6 py-3 rounded-xl text-sm font-medium transition-all duration-300 ${activeSection === 'carousel'
                             ? 'bg-primary text-primary-foreground shadow-glow'
@@ -166,8 +319,50 @@ const ContentCreationSystem = () => {
                         <h2 className="text-xl font-bold text-foreground mb-6">Universal Inputs</h2>
 
                         <div className="space-y-4">
+
+                            {/* NEW: Persona Input Section */}
+                            <div className="p-4 rounded-xl bg-primary/5 border border-primary/10 space-y-3">
+                                <div>
+                                    <Label htmlFor="personaInput" className="text-primary font-semibold flex items-center gap-2">
+                                        ✨ AI Persona Generator
+                                    </Label>
+                                    <p className="text-xs text-muted-foreground mb-2">
+                                        Paste a persona description or bio to auto-fill the client details.
+                                    </p>
+                                    <Textarea
+                                        id="personaInput"
+                                        value={personaInput}
+                                        onChange={(e) => setPersonaInput(e.target.value)}
+                                        placeholder="Paste persona description, bio, or 'About Me' text here..."
+                                        className="bg-background/50"
+                                        rows={3}
+                                    />
+                                </div>
+                                <Button
+                                    onClick={handleSuggestPersona}
+                                    disabled={isSuggestingPersona || !personaInput.trim()}
+                                    variant="secondary"
+                                    className="w-full"
+                                    size="sm"
+                                >
+                                    {isSuggestingPersona ? (
+                                        <>
+                                            <Loader2 className="mr-2 h-3 w-3 animate-spin" />
+                                            Analyzing Persona...
+                                        </>
+                                    ) : (
+                                        'Auto-Fill Client Details'
+                                    )}
+                                </Button>
+                            </div>
+
+                            <div className="h-px bg-border/50 my-4" />
+
                             <div>
-                                <Label htmlFor="clientName">Client Name</Label>
+                                <Label htmlFor="clientName">
+                                    Client Name
+                                    {autoFilledFields.clientName && <span className="ml-2 text-xs text-primary animate-in fade-in">✨ Auto-filled</span>}
+                                </Label>
                                 <Input
                                     id="clientName"
                                     value={inputs.clientName}
@@ -177,7 +372,10 @@ const ContentCreationSystem = () => {
                             </div>
 
                             <div>
-                                <Label htmlFor="clientRole">Client Role / Title</Label>
+                                <Label htmlFor="clientRole">
+                                    Client Role / Title
+                                    {autoFilledFields.clientRole && <span className="ml-2 text-xs text-primary animate-in fade-in">✨ Auto-filled</span>}
+                                </Label>
                                 <Input
                                     id="clientRole"
                                     value={inputs.clientRole}
@@ -187,7 +385,10 @@ const ContentCreationSystem = () => {
                             </div>
 
                             <div>
-                                <Label htmlFor="clientNiche">Client Niche</Label>
+                                <Label htmlFor="clientNiche">
+                                    Client Niche
+                                    {autoFilledFields.clientNiche && <span className="ml-2 text-xs text-primary animate-in fade-in">✨ Auto-filled</span>}
+                                </Label>
                                 <Input
                                     id="clientNiche"
                                     value={inputs.clientNiche}
@@ -197,7 +398,10 @@ const ContentCreationSystem = () => {
                             </div>
 
                             <div>
-                                <Label htmlFor="targetAudience">Target Audience</Label>
+                                <Label htmlFor="targetAudience">
+                                    Target Audience
+                                    {autoFilledFields.targetAudience && <span className="ml-2 text-xs text-primary animate-in fade-in">✨ Auto-filled</span>}
+                                </Label>
                                 <Input
                                     id="targetAudience"
                                     value={inputs.targetAudience}
@@ -207,7 +411,10 @@ const ContentCreationSystem = () => {
                             </div>
 
                             <div>
-                                <Label htmlFor="audiencePainPoint">Primary Audience Pain Point</Label>
+                                <Label htmlFor="audiencePainPoint">
+                                    Primary Audience Pain Point
+                                    {autoFilledFields.audiencePainPoint && <span className="ml-2 text-xs text-primary animate-in fade-in">✨ Auto-filled</span>}
+                                </Label>
                                 <Textarea
                                     id="audiencePainPoint"
                                     value={inputs.audiencePainPoint}
@@ -218,7 +425,10 @@ const ContentCreationSystem = () => {
                             </div>
 
                             <div>
-                                <Label htmlFor="desiredOutcome">Primary Desired Outcome</Label>
+                                <Label htmlFor="desiredOutcome">
+                                    Primary Desired Outcome
+                                    {autoFilledFields.desiredOutcome && <span className="ml-2 text-xs text-primary animate-in fade-in">✨ Auto-filled</span>}
+                                </Label>
                                 <Textarea
                                     id="desiredOutcome"
                                     value={inputs.desiredOutcome}
@@ -229,7 +439,10 @@ const ContentCreationSystem = () => {
                             </div>
 
                             <div>
-                                <Label htmlFor="offerCta">Offer / CTA</Label>
+                                <Label htmlFor="offerCta">
+                                    Offer / CTA
+                                    {autoFilledFields.offerCta && <span className="ml-2 text-xs text-primary animate-in fade-in">✨ Auto-filled</span>}
+                                </Label>
                                 <Input
                                     id="offerCta"
                                     value={inputs.offerCta}
@@ -239,7 +452,10 @@ const ContentCreationSystem = () => {
                             </div>
 
                             <div>
-                                <Label htmlFor="tone">Tone</Label>
+                                <Label htmlFor="tone">
+                                    Tone
+                                    {autoFilledFields.tone && <span className="ml-2 text-xs text-primary animate-in fade-in">✨ Auto-filled</span>}
+                                </Label>
                                 <Select value={inputs.tone} onValueChange={(value) => updateInput('tone', value)}>
                                     <SelectTrigger>
                                         <SelectValue placeholder="Select tone" />
@@ -256,7 +472,10 @@ const ContentCreationSystem = () => {
 
                             {/* Content Pillar Selection */}
                             <div>
-                                <Label htmlFor="contentPillar">Content Pillar</Label>
+                                <Label htmlFor="contentPillar">
+                                    Content Pillar
+                                    {autoFilledFields.contentPillar && <span className="ml-2 text-xs text-primary animate-in fade-in">✨ Auto-filled</span>}
+                                </Label>
                                 <Select
                                     value={selectedPillar}
                                     onValueChange={(value) => setSelectedPillar(value as any)}

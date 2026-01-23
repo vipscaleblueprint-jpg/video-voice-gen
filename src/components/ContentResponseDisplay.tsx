@@ -2,6 +2,7 @@ import { useState, useMemo } from 'react';
 import { Copy, Check } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { toast } from '@/hooks/use-toast';
+import { cn } from '@/lib/utils';
 
 interface ContentResponse {
     // Current simple structure (keeping for backward compatibility or direct usage)
@@ -24,6 +25,36 @@ interface ContentResponseDisplayProps {
     response: ContentResponse | ContentResponse[];
     format: 'looping-video' | 'carousel';
 }
+
+const CopyableItem = ({ text, className }: { text: string; className?: string }) => {
+    const [copied, setCopied] = useState(false);
+
+    const handleCopy = () => {
+        navigator.clipboard.writeText(text);
+        setCopied(true);
+        toast({
+            title: 'Copied!',
+            description: 'Item copied to clipboard',
+            duration: 1500,
+        });
+        setTimeout(() => setCopied(false), 2000);
+    };
+
+    return (
+        <div className={cn("group flex items-start justify-between gap-3 p-2 rounded-lg hover:bg-white/5 transition-colors", className)}>
+            <p className="text-foreground leading-relaxed flex-1">{text}</p>
+            <Button
+                variant="ghost"
+                size="icon"
+                onClick={handleCopy}
+                className="opacity-0 group-hover:opacity-100 transition-opacity h-6 w-6 text-muted-foreground hover:text-primary shrink-0"
+                title="Copy item"
+            >
+                {copied ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
+            </Button>
+        </div>
+    );
+};
 
 export const ContentResponseDisplay = ({ response, format }: ContentResponseDisplayProps) => {
     const [copied, setCopied] = useState(false);
@@ -157,11 +188,9 @@ export const ContentResponseDisplay = ({ response, format }: ContentResponseDisp
                     {/* Text Overlay Section */}
                     <div>
                         <h4 className="text-sm font-semibold text-primary mb-3">Text Overlay:</h4>
-                        <div className="bg-muted/20 rounded-xl p-4 space-y-2">
+                        <div className="bg-muted/20 rounded-xl p-2 space-y-1">
                             {parsedContent.textOverlay.map((line, idx) => (
-                                <p key={idx} className="text-foreground leading-relaxed">
-                                    {line}
-                                </p>
+                                <CopyableItem key={idx} text={line} />
                             ))}
                         </div>
                     </div>
@@ -170,15 +199,10 @@ export const ContentResponseDisplay = ({ response, format }: ContentResponseDisp
                     {parsedContent.bRollSuggestions.length > 0 && (
                         <div>
                             <h4 className="text-sm font-semibold text-primary mb-3">B-Roll Suggestions:</h4>
-                            <div className="bg-muted/20 rounded-xl p-4">
-                                <ul className="space-y-2">
-                                    {parsedContent.bRollSuggestions.map((suggestion, idx) => (
-                                        <li key={idx} className="text-foreground flex items-start">
-                                            <span className="text-primary mr-2">•</span>
-                                            <span>{suggestion}</span>
-                                        </li>
-                                    ))}
-                                </ul>
+                            <div className="bg-muted/20 rounded-xl p-2 space-y-1">
+                                {parsedContent.bRollSuggestions.map((suggestion, idx) => (
+                                    <CopyableItem key={idx} text={suggestion} />
+                                ))}
                             </div>
                         </div>
                     )}
@@ -189,8 +213,8 @@ export const ContentResponseDisplay = ({ response, format }: ContentResponseDisp
                     {parsedContent.title && (
                         <div>
                             <h4 className="text-sm font-semibold text-primary mb-3">Carousel Title:</h4>
-                            <div className="bg-muted/20 rounded-xl p-4">
-                                <p className="text-lg font-bold text-foreground">{parsedContent.title}</p>
+                            <div className="bg-muted/20 rounded-xl p-2">
+                                <CopyableItem text={parsedContent.title} className="font-bold text-lg" />
                             </div>
                         </div>
                     )}
@@ -200,7 +224,7 @@ export const ContentResponseDisplay = ({ response, format }: ContentResponseDisp
                         <h4 className="text-sm font-semibold text-primary mb-3">Slides:</h4>
                         <div className="space-y-4">
                             {parsedContent.slides.map((slide, idx) => (
-                                <div key={idx} className="bg-muted/20 rounded-xl p-4 border border-border/50">
+                                <div key={idx} className="bg-muted/20 rounded-xl p-4 border border-border/50 group relative">
                                     <div className="flex items-center gap-2 mb-3">
                                         <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center">
                                             <span className="text-sm font-bold text-primary">{idx + 1}</span>
@@ -209,8 +233,10 @@ export const ContentResponseDisplay = ({ response, format }: ContentResponseDisp
                                             {idx === parsedContent.slides!.length - 1 ? 'CTA Slide' : `Slide ${idx + 1}`}
                                         </span>
                                     </div>
-                                    <p className="text-foreground font-semibold mb-2">{slide.headline}</p>
-                                    <p className="text-muted-foreground text-sm">{slide.subheadline}</p>
+                                    <div className="space-y-2">
+                                        <CopyableItem text={slide.headline} className="font-semibold" />
+                                        <CopyableItem text={slide.subheadline} className="text-sm text-muted-foreground" />
+                                    </div>
                                 </div>
                             ))}
                         </div>
