@@ -17,6 +17,8 @@ import VPSGenerator from "./pages/VPSGenerator";
 import ContentCreationSystem from "./pages/ContentCreationSystem";
 import NotFound from "./pages/NotFound";
 
+import ClientOnboarding from "./pages/ClientOnboarding";
+
 const queryClient = new QueryClient();
 
 const App = () => (
@@ -37,6 +39,7 @@ const App = () => (
           <Route path="/ads-copy" element={<AdsCopyGenerator />} />
           <Route path="/vps-generator" element={<VPSGenerator />} />
           <Route path="/content-creation" element={<ContentCreationSystem />} />
+          <Route path="/client-onboarding" element={<ClientOnboarding />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>

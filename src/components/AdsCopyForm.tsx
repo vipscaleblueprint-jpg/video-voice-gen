@@ -1,10 +1,25 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Loader2, Send } from 'lucide-react';
 
 import { Input } from '@/components/ui/input';
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select";
+import { toast } from '@/hooks/use-toast';
+
+const CLIENTS_ENDPOINT = 'https://n8n.srv1151765.hstgr.cloud/webhook/client-description';
+
+interface Client {
+    Client: string;
+    Voice: string;
+}
 
 export interface AdsCopyFormPayload {
     product: string;
@@ -25,6 +40,40 @@ export const AdsCopyForm = ({ onSubmit, isLoading, ctaLink, onCtaLinkChange }: A
     const [vps, setVps] = useState('');
     const [goal, setGoal] = useState('');
     const [targetMarket, setTargetMarket] = useState('');
+    const [clients, setClients] = useState<Client[]>([]);
+    const [selectedClient, setSelectedClient] = useState<string>('');
+    const [loadingClients, setLoadingClients] = useState(false);
+
+    useEffect(() => {
+        const fetchClients = async () => {
+            setLoadingClients(true);
+            try {
+                const res = await fetch(CLIENTS_ENDPOINT);
+                if (!res.ok) throw new Error('Failed to fetch clients');
+                const data = await res.json();
+                setClients(data);
+            } catch (error) {
+                console.error('Failed to fetch clients:', error);
+                toast({
+                    title: 'Error',
+                    description: 'Failed to load client list',
+                    variant: 'destructive',
+                });
+            } finally {
+                setLoadingClients(false);
+            }
+        };
+
+        fetchClients();
+    }, []);
+
+    const handleClientChange = (clientId: string) => {
+        setSelectedClient(clientId);
+        const clientData = clients.find(c => c.Client === clientId);
+        if (clientData) {
+            setVps(clientData.Voice);
+        }
+    };
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -38,6 +87,24 @@ export const AdsCopyForm = ({ onSubmit, isLoading, ctaLink, onCtaLinkChange }: A
 
     return (
         <form onSubmit={handleSubmit} className="space-y-6">
+            <div className="space-y-2">
+                <Label htmlFor="client-select" className="text-muted-foreground uppercase text-xs font-bold tracking-wider">
+                    Select Client (Autofill VPS)
+                </Label>
+                <Select value={selectedClient} onValueChange={handleClientChange}>
+                    <SelectTrigger id="client-select" className="bg-secondary border-border focus:ring-primary/20 h-12">
+                        <SelectValue placeholder={loadingClients ? "Loading clients..." : "Choose a client profile"} />
+                    </SelectTrigger>
+                    <SelectContent>
+                        {clients.map((client) => (
+                            <SelectItem key={client.Client} value={client.Client}>
+                                {client.Client}
+                            </SelectItem>
+                        ))}
+                    </SelectContent>
+                </Select>
+            </div>
+
             <div className="space-y-2">
                 <Label htmlFor="vps" className="text-muted-foreground uppercase text-xs font-bold tracking-wider">
                     Value Proposition Statement (VPS)

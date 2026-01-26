@@ -12,7 +12,8 @@ import {
     Menu,
     X,
     FileText,
-    Target
+    Target,
+    UserPlus
 } from 'lucide-react';
 
 const navItems = [
@@ -25,6 +26,7 @@ const navItems = [
     { to: '/ads-copy', label: 'Ads Copy', icon: Megaphone },
     { to: '/vps-generator', label: 'VPS Generator', icon: Target },
     { to: '/content-creation', label: 'Content Creation System', icon: FileText },
+    { to: '/client-onboarding', label: 'Client Onboarding', icon: UserPlus },
 ];
 
 export const Navigation = () => {

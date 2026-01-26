@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { AdsCopyForm, type AdsCopyFormPayload } from '@/components/AdsCopyForm';
 import { AdsResponseDisplay } from '@/components/AdsResponseDisplay';
 import { Megaphone, Loader2 } from 'lucide-react';

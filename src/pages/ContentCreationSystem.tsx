@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { FileText, Loader2 } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { ContentResponseDisplay } from '@/components/ContentResponseDisplay';
@@ -7,6 +7,13 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+
+const CLIENTS_ENDPOINT = 'https://n8n.srv1151765.hstgr.cloud/webhook/client-description';
+
+interface Client {
+    Client: string;
+    Voice: string;
+}
 
 type ContentFormat = 'looping-video' | 'carousel';
 type Tone = 'Calm' | 'Bold' | 'Direct' | 'Aspirational' | 'Educational';
@@ -52,6 +59,41 @@ const ContentCreationSystem = () => {
     const [isSuggestingPersona, setIsSuggestingPersona] = useState(false);
     const [autoFilledFields, setAutoFilledFields] = useState<Record<string, boolean>>({});
 
+    const [clients, setClients] = useState<Client[]>([]);
+    const [selectedClient, setSelectedClient] = useState<string>('');
+    const [loadingClients, setLoadingClients] = useState(false);
+
+    useEffect(() => {
+        const fetchClients = async () => {
+            setLoadingClients(true);
+            try {
+                const res = await fetch(CLIENTS_ENDPOINT);
+                if (!res.ok) throw new Error('Failed to fetch clients');
+                const data = await res.json();
+                setClients(data);
+            } catch (error) {
+                console.error('Failed to fetch clients:', error);
+                toast({
+                    title: 'Error',
+                    description: 'Failed to load client list',
+                    variant: 'destructive',
+                });
+            } finally {
+                setLoadingClients(false);
+            }
+        };
+
+        fetchClients();
+    }, []);
+
+    const handleClientChange = (clientId: string) => {
+        setSelectedClient(clientId);
+        const clientData = clients.find(c => c.Client === clientId);
+        if (clientData) {
+            setPersonaInput(clientData.Voice);
+        }
+    };
+
     const handleSuggestPersona = async () => {
         setIsSuggestingPersona(true);
         try {
@@ -64,7 +106,8 @@ const ContentCreationSystem = () => {
                 },
                 body: JSON.stringify({
                     persona: personaInput,
-                    format: activeSection
+                    format: activeSection,
+                    client: selectedClient
                 }),
             });
 
@@ -324,11 +367,25 @@ const ContentCreationSystem = () => {
                             <div className="p-4 rounded-xl bg-primary/5 border border-primary/10 space-y-3">
                                 <div>
                                     <Label htmlFor="personaInput" className="text-primary font-semibold flex items-center gap-2">
-                                        ✨ AI Persona Generator
+                                        ✨ Client Details Generator
                                     </Label>
                                     <p className="text-xs text-muted-foreground mb-2">
                                         Paste a persona description or bio to auto-fill the client details.
                                     </p>
+                                    <div className="mb-3">
+                                        <Select value={selectedClient} onValueChange={handleClientChange}>
+                                            <SelectTrigger className="bg-background/50 border-primary/20">
+                                                <SelectValue placeholder={loadingClients ? "Loading clients..." : "Select a client profile"} />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                {clients.map((client) => (
+                                                    <SelectItem key={client.Client} value={client.Client}>
+                                                        {client.Client}
+                                                    </SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
                                     <Textarea
                                         id="personaInput"
                                         value={personaInput}
