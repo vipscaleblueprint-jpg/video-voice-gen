@@ -8,6 +8,13 @@ import { toast } from '@/hooks/use-toast';
 import { ResponseDisplay } from '@/components/ResponseDisplay';
 
 const API_ENDPOINT = 'https://n8n.srv1151765.hstgr.cloud/webhook/client-onboarding';
+const CLIENTS_ENDPOINT = 'https://n8n.srv1151765.hstgr.cloud/webhook/client-description';
+const SCRIPT_API_ENDPOINT = 'https://n8n.srv1151765.hstgr.cloud/webhook/client-onboarding-script';
+
+interface Client {
+    Client: string;
+    Voice: string;
+}
 
 const TEMPLATES = [
     {
@@ -50,7 +57,13 @@ const ClientOnboarding = () => {
     const [clientBio, setClientBio] = useState('');
     const [selectedTemplate, setSelectedTemplate] = useState('');
     const [isLoading, setIsLoading] = useState(false);
-    const [generatedScript, setGeneratedScript] = useState('');
+    const [isGeneratingScript, setIsGeneratingScript] = useState(false);
+    const [generatedScript, setGeneratedScript] = useState<any>(null);
+    const [finalScript, setFinalScript] = useState<string>('');
+
+    const [clients, setClients] = useState<Client[]>([]);
+    const [selectedClient, setSelectedClient] = useState<string>('');
+    const [loadingClients, setLoadingClients] = useState(false);
 
     // CTA State
     const [ctaOptions, setCtaOptions] = useState<CtaOption[]>([]);
@@ -73,6 +86,143 @@ const ClientOnboarding = () => {
         };
         fetchCtaOptions();
     }, []);
+
+    // Fetch Clients
+    useEffect(() => {
+        const fetchClients = async () => {
+            setLoadingClients(true);
+            try {
+                const res = await fetch(CLIENTS_ENDPOINT);
+                if (!res.ok) throw new Error('Failed to fetch clients');
+                const data = await res.json();
+                setClients(data);
+            } catch (error) {
+                console.error('Failed to fetch clients:', error);
+                toast({
+                    title: 'Error',
+                    description: 'Failed to load client list',
+                    variant: 'destructive',
+                });
+            } finally {
+                setLoadingClients(false);
+            }
+        };
+
+        fetchClients();
+    }, []);
+
+    const handleClientChange = (clientId: string) => {
+        setSelectedClient(clientId);
+        const clientData = clients.find(c => c.Client === clientId);
+        if (clientData) {
+            setClientBio(clientData.Voice);
+        }
+    };
+
+    // Helper to recursively extract the structured part of the response
+    const extractStructuredData = (content: any): any => {
+        if (!content) return null;
+
+        // If it's already an object (and not an array)
+        if (typeof content === 'object' && content !== null && !Array.isArray(content)) {
+            // Check for nested structured fields first
+            if (content.output && typeof content.output === 'object' && !Array.isArray(content.output)) {
+                return content.output;
+            }
+            if (content.script && typeof content.script === 'object' && !Array.isArray(content.script)) {
+                return content.script;
+            }
+            // It's already the structured object we want
+            return content;
+        }
+
+        // If it's a string, try to parse it
+        if (typeof content === 'string') {
+            const trimmed = content.trim();
+            if (trimmed.startsWith('{') || trimmed.startsWith('[')) {
+                try {
+                    const parsed = JSON.parse(trimmed);
+                    // Recurse to handle potentially nested output/script within the parsed string
+                    return extractStructuredData(parsed);
+                } catch (e) {
+                    return null;
+                }
+            }
+        }
+
+        return null;
+    };
+
+    const formatStructuredData = (structured: any): string => {
+        return Object.entries(structured).map(([key, value]) => {
+            const label = key.replace(/_/g, ' ').toUpperCase();
+            let content = '';
+
+            if (typeof value === 'object' && value !== null && !Array.isArray(value)) {
+                // Prettify nested step objects
+                content = Object.entries(value).map(([vKey, vVal]) => {
+                    return `${vKey.toUpperCase()}: ${vVal}`;
+                }).join('\n');
+            } else {
+                content = typeof value === 'string' ? value : JSON.stringify(value, null, 2);
+            }
+
+            return `[ ${label} ]\n${content}`;
+        }).join('\n\n');
+    };
+
+    const handleGenerateScript = async () => {
+        if (!generatedScript?.paraphrased) return;
+
+        setIsGeneratingScript(true);
+        try {
+            const templateLogic = TEMPLATES.find(t => t.label === selectedTemplate)?.value || '';
+            const res = await fetch(SCRIPT_API_ENDPOINT, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    client_bio_input: clientBio,
+                    template_structure: templateLogic,
+                    cta: selectedCta,
+                    client: selectedClient,
+                    internal_logic: generatedScript.paraphrased
+                }),
+            });
+
+            if (!res.ok) throw new Error(`Request failed with status ${res.status}`);
+
+            let data = await res.json();
+
+            // Handle array response
+            if (Array.isArray(data) && data.length > 0) {
+                data = data[0];
+            }
+
+            const structured = extractStructuredData(data);
+            if (structured) {
+                setFinalScript(formatStructuredData(structured));
+            } else {
+                const script = data.output || data.script || (typeof data === 'string' ? data : JSON.stringify(data, null, 2));
+                setFinalScript(script);
+            }
+
+            toast({
+                title: "Script Generated",
+                description: "The final script is ready!",
+            });
+        } catch (error) {
+            console.error('Script generation error:', error);
+            toast({
+                title: "Error",
+                description: "Failed to generate the final script.",
+                variant: "destructive"
+            });
+        } finally {
+            setIsGeneratingScript(false);
+        }
+    };
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -100,7 +250,8 @@ const ClientOnboarding = () => {
                 body: JSON.stringify({
                     client_bio_input: clientBio,
                     template_structure: templateLogic,
-                    cta: selectedCta
+                    cta: selectedCta,
+                    client: selectedClient
                 }),
             });
 
@@ -108,11 +259,28 @@ const ClientOnboarding = () => {
                 throw new Error(`Request failed with status ${res.status}`);
             }
 
-            const data = await res.json();
+            let data = await res.json();
 
-            // Assume the webhook returns { output: "script..." } or just the text
-            const script = data.output || data.script || (typeof data === 'string' ? data : JSON.stringify(data, null, 2));
-            setGeneratedScript(script);
+            // Handle array response (common with n8n)
+            if (Array.isArray(data) && data.length > 0) {
+                data = data[0];
+            }
+
+            // Handle structured JSON response
+            let responseData: any = {};
+            const structured = extractStructuredData(data);
+
+            if (structured) {
+                responseData.paraphrased = formatStructuredData(structured);
+                responseData.preserveWhitespace = true; // Ensure newline preservation
+            } else {
+                // Fallback to string display if no structured data found
+                const rawContent = data.output || data.script || (typeof data === 'string' ? data : JSON.stringify(data, null, 2));
+                responseData.paraphrased = rawContent;
+                responseData.preserveWhitespace = true;
+            }
+
+            setGeneratedScript(responseData);
 
             toast({
                 title: "Success",
@@ -157,15 +325,35 @@ const ClientOnboarding = () => {
                     {/* Input Form */}
                     <div className="glass rounded-2xl p-6 md:p-8 shadow-card h-fit">
                         <form onSubmit={handleSubmit} className="space-y-6">
-                            <div className="space-y-2">
-                                <Label htmlFor="clientBio">Client Bio</Label>
-                                <Textarea
-                                    id="clientBio"
-                                    value={clientBio}
-                                    onChange={(e) => setClientBio(e.target.value)}
-                                    placeholder="Paste client bio here..."
-                                    className="min-h-[200px]"
-                                />
+                            <div className="space-y-4">
+                                <div className="p-4 rounded-xl bg-primary/5 border border-primary/10 space-y-3">
+                                    <Label htmlFor="clientProfile" className="text-primary font-semibold flex items-center gap-2">
+                                        ✨ Client Profile Selector
+                                    </Label>
+                                    <Select value={selectedClient} onValueChange={handleClientChange}>
+                                        <SelectTrigger className="bg-background/50 border-primary/20">
+                                            <SelectValue placeholder={loadingClients ? "Loading clients..." : "Select a client profile"} />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            {clients.map((client) => (
+                                                <SelectItem key={client.Client} value={client.Client}>
+                                                    {client.Client}
+                                                </SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+
+                                <div className="space-y-2">
+                                    <Label htmlFor="clientBio">Client Bio</Label>
+                                    <Textarea
+                                        id="clientBio"
+                                        value={clientBio}
+                                        onChange={(e) => setClientBio(e.target.value)}
+                                        placeholder="Paste client bio here or select a profile above..."
+                                        className="min-h-[200px]"
+                                    />
+                                </div>
                             </div>
 
                             <div className="space-y-2">
@@ -233,7 +421,7 @@ const ClientOnboarding = () => {
                                 ) : (
                                     <>
                                         <Sparkles className="w-5 h-5 mr-2" />
-                                        Generate Script
+                                        Generate Internal Logic
                                     </>
                                 )}
                             </Button>
@@ -248,11 +436,34 @@ const ClientOnboarding = () => {
                                 <p className="text-muted-foreground font-medium">Generating script...</p>
                             </div>
                         ) : generatedScript ? (
-                            <ResponseDisplay
-                                response={{
-                                    paraphrased: generatedScript
-                                }}
-                            />
+                            <div className="space-y-6">
+                                <ResponseDisplay
+                                    response={generatedScript}
+                                    paraphrasedLabel="Internal Logic"
+                                    secondaryAction={{
+                                        label: "Generate Script",
+                                        onClick: handleGenerateScript,
+                                        isLoading: isGeneratingScript
+                                    }}
+                                />
+
+                                {isGeneratingScript && (
+                                    <div className="glass rounded-2xl p-6 md:p-8 shadow-card flex flex-col items-center justify-center min-h-[200px] text-center">
+                                        <Loader2 className="w-10 h-10 text-primary animate-spin mb-4" />
+                                        <p className="text-muted-foreground font-medium">Drafting final script...</p>
+                                    </div>
+                                )}
+
+                                {finalScript && (
+                                    <ResponseDisplay
+                                        response={{
+                                            paraphrased: finalScript,
+                                            preserveWhitespace: true
+                                        }}
+                                        paraphrasedLabel="Final Script"
+                                    />
+                                )}
+                            </div>
                         ) : (
                             <div className="glass rounded-2xl p-6 md:p-8 shadow-card flex flex-col items-center justify-center min-h-[300px] text-center">
                                 <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mb-4">

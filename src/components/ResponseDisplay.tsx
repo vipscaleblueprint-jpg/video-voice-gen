@@ -1,4 +1,4 @@
-import { ChevronDown, Copy, Check, FileText, Globe, Sparkles, Clock, MessageSquare } from 'lucide-react';
+import { ChevronDown, Copy, Check, FileText, Globe, Sparkles, Clock, MessageSquare, Loader2 } from 'lucide-react';
 import { useState } from 'react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -39,13 +39,22 @@ interface ApiResponse {
   pinterest?: string;
   reddit?: string;
   threads?: string;
+  sections?: { label: string; content: string }[];
+  preserveWhitespace?: boolean;
 }
 
 interface ResponseDisplayProps {
   response: ApiResponse;
+  paraphrasedLabel?: string;
+  secondaryAction?: {
+    label: string;
+    onClick: () => void;
+    isLoading?: boolean;
+    icon?: React.ElementType;
+  };
 }
 
-const CopyButton = ({ text }: { text: string }) => {
+const CopyButton = ({ text, showLabel = false }: { text: string; showLabel?: boolean }) => {
   const [copied, setCopied] = useState(false);
 
   const handleCopy = async () => {
@@ -59,13 +68,42 @@ const CopyButton = ({ text }: { text: string }) => {
       variant="ghost"
       size="sm"
       onClick={handleCopy}
-      className="h-8 px-2 text-muted-foreground hover:text-foreground hover:bg-muted"
+      className={cn("h-8 px-2 text-muted-foreground hover:text-foreground hover:bg-muted font-medium", showLabel && "gap-2")}
     >
       {copied ? (
-        <Check className="w-4 h-4 text-success" />
+        <>
+          <Check className="w-4 h-4 text-success" />
+          {showLabel && <span className="text-success">Copied!</span>}
+        </>
       ) : (
-        <Copy className="w-4 h-4" />
+        <>
+          <Copy className="w-4 h-4" />
+          {showLabel && <span>Copy All</span>}
+        </>
       )}
+    </Button>
+  );
+};
+
+const LineCopyButton = ({ text }: { text: string }) => {
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = async () => {
+    // Strip "[ STEP X ]" or "[ LABEL ]" if it's just a header line? 
+    // Actually, user said line per line, so let's copy exactly what's there but maybe trim.
+    await navigator.clipboard.writeText(text.trim());
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  return (
+    <Button
+      variant="ghost"
+      size="icon"
+      onClick={handleCopy}
+      className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-primary"
+    >
+      {copied ? <Check className="w-3 h-3 text-success" /> : <Copy className="w-3 h-3" />}
     </Button>
   );
 };
@@ -77,6 +115,7 @@ const ResponseCard = ({
   badge,
   className,
   preserveWhitespace = false,
+  secondaryAction,
 }: {
   icon: React.ElementType;
   title: string;
@@ -84,6 +123,12 @@ const ResponseCard = ({
   badge?: string;
   className?: string;
   preserveWhitespace?: boolean;
+  secondaryAction?: {
+    label: string;
+    onClick: () => void;
+    isLoading?: boolean;
+    icon?: React.ElementType;
+  };
 }) => (
   <div className={cn("glass rounded-xl p-5 space-y-3", className)}>
     <div className="flex items-center justify-between">
@@ -98,12 +143,48 @@ const ResponseCard = ({
           </span>
         )}
       </div>
-      <CopyButton text={content} />
+      <CopyButton text={content} showLabel={title.toLowerCase() === 'internal logic' || !!badge} />
     </div>
-    <p className={cn(
+    <div className={cn(
       "text-muted-foreground leading-relaxed text-sm",
       preserveWhitespace && "whitespace-pre-wrap"
-    )}>{content}</p>
+    )}>
+      {content.split('\n').map((line, idx) => {
+        const trimmed = line.trim();
+        if (!trimmed) return <div key={idx} className="h-2" />;
+
+        // Don't show copy button for step headers like [ STEP 1 ] if we want to be clean
+        // But user said "line per line", so let's enable it for all non-empty lines
+        return (
+          <div key={idx} className="group flex items-start justify-between gap-4 py-0.5 hover:bg-primary/5 rounded px-1 -mx-1 transition-colors">
+            <span className="flex-1">{line}</span>
+            <LineCopyButton text={line} />
+          </div>
+        );
+      })}
+    </div>
+
+    {secondaryAction && (
+      <Button
+        onClick={(e) => {
+          e.stopPropagation();
+          secondaryAction.onClick();
+        }}
+        disabled={secondaryAction.isLoading}
+        className="w-full mt-2 bg-primary/10 hover:bg-primary/20 text-primary border-primary/20"
+        variant="outline"
+        size="sm"
+      >
+        {secondaryAction.isLoading ? (
+          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+        ) : secondaryAction.icon ? (
+          <secondaryAction.icon className="w-4 h-4 mr-2" />
+        ) : (
+          <Sparkles className="w-4 h-4 mr-2" />
+        )}
+        {secondaryAction.label}
+      </Button>
+    )}
   </div>
 );
 
@@ -114,7 +195,7 @@ const formatTime = (seconds: number) => {
 };
 
 
-export const ResponseDisplay = ({ response }: ResponseDisplayProps) => {
+export const ResponseDisplay = ({ response, paraphrasedLabel, secondaryAction }: ResponseDisplayProps) => {
   const [isScriptOpen, setIsScriptOpen] = useState(false);
 
   // Build captions from either nested captions object or top-level platform fields
@@ -192,10 +273,28 @@ export const ResponseDisplay = ({ response }: ResponseDisplayProps) => {
       {response.paraphrased && (
         <ResponseCard
           icon={Sparkles}
-          title="Paraphrased Version"
+          title={paraphrasedLabel || "Paraphrased Version"}
           content={response.paraphrased}
           className="border-primary/20"
+          preserveWhitespace={response.preserveWhitespace}
+          secondaryAction={secondaryAction}
         />
+      )}
+
+      {/* Structured Sections */}
+      {response.sections && response.sections.length > 0 && (
+        <div className="space-y-4">
+          {response.sections.map((section, index) => (
+            <ResponseCard
+              key={index}
+              icon={Sparkles}
+              title={section.label}
+              content={section.content}
+              className="border-primary/10"
+              preserveWhitespace={true}
+            />
+          ))}
+        </div>
       )}
 
       {/* Hook */}
