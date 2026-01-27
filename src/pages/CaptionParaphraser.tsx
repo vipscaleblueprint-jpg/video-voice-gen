@@ -5,7 +5,7 @@ import { MessageSquare, Loader2 } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { SocialCaptions } from '@/types';
 
-const API_ENDPOINT = 'https://n8n.srv1151765.hstgr.cloud/webhook/caption-generator';
+const API_ENDPOINT = 'https://n8n.srv1151765.hstgr.cloud/webhook/generate-caption';
 
 const CaptionParaphraser = () => {
     const [isLoading, setIsLoading] = useState(false);

@@ -59,10 +59,17 @@ export const CaptionResponseDisplay = ({
   title = "Generated Captions",
   emptyMessage = "No captions were generated."
 }: CaptionResponseDisplayProps) => {
-  // Filter out empty/null/undefined captions and unknown platforms
+  // Determine the overall title from the 'Title' key if it exists
+  const overallTitle = captions.Title && typeof captions.Title === 'object' && 'content' in captions.Title
+    ? (captions.Title as CaptionData).content
+    : captions.title;
+
+  // Filter out empty/null/undefined captions, unknown platforms, and the special 'Title' key
   const validCaptions = Object.entries(captions).filter(
     ([key, value]) => {
       const platformKey = key.toLowerCase();
+      if (platformKey === 'title') return false; // Skip the special Title key in the list
+
       const data = value as CaptionData;
       return (
         data &&
@@ -84,6 +91,16 @@ export const CaptionResponseDisplay = ({
 
   return (
     <div className="glass rounded-2xl p-6 md:p-8 shadow-card space-y-4">
+      {overallTitle && (
+        <div className="mb-8 p-4 bg-primary/5 rounded-xl border border-primary/20">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-xs font-bold text-primary uppercase tracking-widest">Main Title</span>
+            <CopyButton text={overallTitle} />
+          </div>
+          <h1 className="text-2xl font-bold text-foreground leading-tight">{overallTitle}</h1>
+        </div>
+      )}
+
       <h2 className="text-xl font-semibold text-foreground mb-4">
         {title} ({validCaptions.length})
       </h2>

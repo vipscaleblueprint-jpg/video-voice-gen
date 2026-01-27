@@ -6,5 +6,6 @@ export interface CaptionData {
 }
 
 export interface SocialCaptions {
-    [key: string]: CaptionData;
+    title?: string;
+    [key: string]: CaptionData | string | undefined;
 }

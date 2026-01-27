@@ -14,6 +14,7 @@ interface ContentResponse {
         subheadline: string;
     }>;
     rawOutput?: string;
+    title?: string;
     // New nested structure from webhook
     output?: string | {
         textOverlay?: {
@@ -120,6 +121,7 @@ export const ContentResponseDisplay = ({ response, format }: ContentResponseDisp
 
             return {
                 type: 'looping-video',
+                title: (data.output as any)?.title || data.title || '',
                 textOverlay: overlayLines,
                 bRollSuggestions: bRolls,
                 cta: cta
@@ -172,7 +174,8 @@ export const ContentResponseDisplay = ({ response, format }: ContentResponseDisp
         let textToCopy = '';
 
         if (parsedContent?.type === 'looping-video') {
-            textToCopy = `Text Overlay:\n${parsedContent.textOverlay.join('\n')}`;
+            if (parsedContent.title) textToCopy += `Title: ${parsedContent.title}\n\n`;
+            textToCopy += `Text Overlay:\n${parsedContent.textOverlay.join('\n')}`;
             if (parsedContent.cta) {
                 textToCopy += `\nCTA: ${parsedContent.cta}`;
             }
@@ -220,8 +223,19 @@ export const ContentResponseDisplay = ({ response, format }: ContentResponseDisp
                 </Button>
             </div>
 
-            {parsedContent.type === 'looping-video' && parsedContent.textOverlay.length > 0 ? (
+            {parsedContent.type === 'looping-video' && (parsedContent.textOverlay.length > 0 || parsedContent.title) ? (
                 <div className="space-y-6">
+                    {/* Header/Title Section */}
+                    {parsedContent.title && (
+                        <div className="mb-2 p-4 bg-primary/5 rounded-xl border border-primary/20">
+                            <div className="flex items-center justify-between mb-2">
+                                <span className="text-xs font-bold text-primary uppercase tracking-widest">Content Title</span>
+                                {/* We can use CopyableItem or a custom copy here, but for simplicity let's use CopyableItem */}
+                                <CopyableItem text={parsedContent.title} className="font-bold text-xl !p-0 hover:bg-transparent" />
+                            </div>
+                        </div>
+                    )}
+
                     {/* Text Overlay Section */}
                     <div>
                         <h4 className="text-sm font-semibold text-primary mb-3">Text Overlay:</h4>
