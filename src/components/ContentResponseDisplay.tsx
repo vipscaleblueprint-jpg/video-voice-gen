@@ -16,8 +16,18 @@ interface ContentResponse {
     rawOutput?: string;
     // New nested structure from webhook
     output?: string | {
-        textOverlay?: Record<string, string>;
-        bRollSuggestions?: Record<string, string>;
+        textOverlay?: {
+            line1?: string;
+            line2?: string;
+            line3?: string;
+            cta?: string;
+            [key: string]: string | undefined;
+        };
+        bRollSuggestions?: {
+            clip1?: string;
+            clip2?: string;
+            [key: string]: string | undefined;
+        };
     };
 }
 
@@ -68,28 +78,51 @@ export const ContentResponseDisplay = ({ response, format }: ContentResponseDisp
         if (format === 'looping-video') {
             let overlayLines: string[] = [];
             let bRolls: string[] = [];
+            let cta: string = '';
 
             // Case 1: Nested webhook structure
-            if (data.output && typeof data.output !== 'string' && data.output.textOverlay) {
-                // Extract lines safely, filtering out empty ones
-                overlayLines = Object.values(data.output.textOverlay).filter(Boolean) as string[];
-            }
-            // Case 2: Direct array structure (legacy support)
-            else if (data.textOverlay && Array.isArray(data.textOverlay)) {
-                overlayLines = data.textOverlay;
-            }
+            if (data.output && typeof data.output !== 'string') {
+                if (data.output.textOverlay) {
+                    const to = data.output.textOverlay;
+                    // If it has line1, line2, line3 structure
+                    if (to.line1 || to.line2 || to.line3) {
+                        overlayLines = [to.line1, to.line2, to.line3].filter(Boolean) as string[];
+                        cta = to.cta || '';
+                    } else {
+                        // Fallback to original Record behavior
+                        overlayLines = Object.values(to).filter(Boolean) as string[];
+                    }
+                }
 
-            // Extract B-Rolls
-            if (data.output && typeof data.output !== 'string' && data.output.bRollSuggestions) {
-                bRolls = Object.values(data.output.bRollSuggestions).filter(Boolean) as string[];
-            } else if (data.bRollSuggestions && Array.isArray(data.bRollSuggestions)) {
-                bRolls = data.bRollSuggestions;
+                if (data.output.bRollSuggestions) {
+                    bRolls = Object.values(data.output.bRollSuggestions).filter(Boolean) as string[];
+                }
+            }
+            // Case 2: Direct properties (legacy or alternative format)
+            else if (data.textOverlay || data.bRollSuggestions) {
+                if (Array.isArray(data.textOverlay)) {
+                    overlayLines = data.textOverlay;
+                } else if (typeof data.textOverlay === 'object' && data.textOverlay !== null) {
+                    const to = data.textOverlay as any;
+                    overlayLines = [to.line1, to.line2, to.line3].filter(Boolean);
+                    cta = to.cta || '';
+                    if (overlayLines.length === 0) {
+                        overlayLines = Object.values(to).filter(Boolean) as string[];
+                    }
+                }
+
+                if (Array.isArray(data.bRollSuggestions)) {
+                    bRolls = data.bRollSuggestions;
+                } else if (typeof data.bRollSuggestions === 'object' && data.bRollSuggestions !== null) {
+                    bRolls = Object.values(data.bRollSuggestions).filter(Boolean) as string[];
+                }
             }
 
             return {
                 type: 'looping-video',
                 textOverlay: overlayLines,
-                bRollSuggestions: bRolls
+                bRollSuggestions: bRolls,
+                cta: cta
             };
         }
 
@@ -139,7 +172,11 @@ export const ContentResponseDisplay = ({ response, format }: ContentResponseDisp
         let textToCopy = '';
 
         if (parsedContent?.type === 'looping-video') {
-            textToCopy = `Text Overlay:\n${parsedContent.textOverlay.join('\n')}\n\nB-Roll Suggestions:\n${parsedContent.bRollSuggestions.map(s => `- ${s}`).join('\n')}`;
+            textToCopy = `Text Overlay:\n${parsedContent.textOverlay.join('\n')}`;
+            if (parsedContent.cta) {
+                textToCopy += `\nCTA: ${parsedContent.cta}`;
+            }
+            textToCopy += `\n\nB-Roll Suggestions:\n${parsedContent.bRollSuggestions.map(s => `- ${s}`).join('\n')}`;
         } else if (parsedContent?.type === 'carousel' && parsedContent.slides) {
             textToCopy = `Carousel Title:\n${parsedContent.title || ''}\n\n${parsedContent.slides.map((slide, idx) =>
                 `Slide ${idx + 1}\nHeadline: ${slide.headline}\nSubheadline: ${slide.subheadline}`
@@ -192,6 +229,12 @@ export const ContentResponseDisplay = ({ response, format }: ContentResponseDisp
                             {parsedContent.textOverlay.map((line, idx) => (
                                 <CopyableItem key={idx} text={line} />
                             ))}
+                            {parsedContent.cta && (
+                                <div className="mt-2 pt-2 border-t border-white/5">
+                                    <p className="text-[10px] uppercase tracking-wider text-muted-foreground ml-2 mb-1">Call to Action</p>
+                                    <CopyableItem text={parsedContent.cta} className="text-primary font-bold" />
+                                </div>
+                            )}
                         </div>
                     </div>
 

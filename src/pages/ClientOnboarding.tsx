@@ -55,6 +55,7 @@ interface CtaOption {
 
 const ClientOnboarding = () => {
     const [clientBio, setClientBio] = useState('');
+    const [clientAdditionalInfo, setClientAdditionalInfo] = useState('');
     const [selectedTemplate, setSelectedTemplate] = useState('');
     const [isLoading, setIsLoading] = useState(false);
     const [isGeneratingScript, setIsGeneratingScript] = useState(false);
@@ -184,6 +185,7 @@ const ClientOnboarding = () => {
                 },
                 body: JSON.stringify({
                     client_bio_input: clientBio,
+                    client_additional_info: clientAdditionalInfo,
                     template_structure: templateLogic,
                     cta: selectedCta,
                     client: selectedClient,
@@ -249,6 +251,7 @@ const ClientOnboarding = () => {
                 },
                 body: JSON.stringify({
                     client_bio_input: clientBio,
+                    client_additional_info: clientAdditionalInfo,
                     template_structure: templateLogic,
                     cta: selectedCta,
                     client: selectedClient
@@ -352,6 +355,17 @@ const ClientOnboarding = () => {
                                         onChange={(e) => setClientBio(e.target.value)}
                                         placeholder="Paste client bio here or select a profile above..."
                                         className="min-h-[200px]"
+                                    />
+                                </div>
+
+                                <div className="space-y-2">
+                                    <Label htmlFor="clientAdditionalInfo">Client Additional Info</Label>
+                                    <Textarea
+                                        id="clientAdditionalInfo"
+                                        value={clientAdditionalInfo}
+                                        onChange={(e) => setClientAdditionalInfo(e.target.value)}
+                                        placeholder="Add any extra details, specific requirements, or contexts..."
+                                        className="min-h-[120px]"
                                     />
                                 </div>
                             </div>

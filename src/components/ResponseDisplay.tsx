@@ -146,7 +146,7 @@ const ResponseCard = ({
       <CopyButton text={content} showLabel={title.toLowerCase() === 'internal logic' || !!badge} />
     </div>
     <div className={cn(
-      "text-muted-foreground leading-relaxed text-sm",
+      "text-foreground leading-relaxed text-sm",
       preserveWhitespace && "whitespace-pre-wrap"
     )}>
       {content.split('\n').map((line, idx) => {
@@ -232,7 +232,7 @@ export const ResponseDisplay = ({ response, paraphrasedLabel, secondaryAction }:
     <div className="space-y-4 animate-in fade-in-0 slide-in-from-bottom-4 duration-500">
       <div className="flex items-center gap-2 mb-6">
         <div className="h-px flex-1 bg-gradient-to-r from-transparent via-border to-transparent" />
-        <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+        <span className="text-xs font-medium text-foreground uppercase tracking-wider">
           Analysis Results
         </span>
         <div className="h-px flex-1 bg-gradient-to-r from-transparent via-border to-transparent" />
