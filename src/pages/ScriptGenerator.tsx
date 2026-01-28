@@ -64,7 +64,7 @@ const ScriptGenerator = () => {
 
 
         {/* Header */}
-        <div className="text-center mb-10">
+        <div className="text-center mb-10 py-[50px]">
           <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-primary/20 mb-4 glow-primary">
             <MessageSquare className="w-8 h-8 text-primary" />
           </div>
