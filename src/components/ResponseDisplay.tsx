@@ -312,7 +312,7 @@ export const ResponseDisplay = ({ response, paraphrasedLabel, secondaryAction }:
       {response.persona_line && (
         <ResponseCard
           icon={Sparkles}
-          title="Generated Persona"
+          title="Final Script"
           content={response.persona_line}
           className="border-primary/20 bg-primary/5"
           preserveWhitespace={true}
