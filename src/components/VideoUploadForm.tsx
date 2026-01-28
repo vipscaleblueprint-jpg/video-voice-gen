@@ -1,5 +1,5 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
-import { Upload, Film, X, Loader2, AlertCircle, Sparkles, FileText } from 'lucide-react';
+import { Upload, Film, X, Loader2, AlertCircle, Sparkles, FileText, ExternalLink } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
@@ -628,6 +628,15 @@ export const VideoUploadForm = ({ onSubmit, onPersonaGenerated, paraphrasedText,
           rows={2}
           className="bg-secondary border-border focus:border-primary focus:ring-primary/20 resize-y"
         />
+        <a
+          href="https://docs.google.com/spreadsheets/d/1oQUbYqCJ-7A7S33459JycD2h60bb7Z8El1p4cTD5B_s/edit?gid=1974246146#gid=1974246146"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex items-center gap-1 text-xs text-primary hover:text-primary/80 transition-colors"
+        >
+          <ExternalLink className="w-3 h-3" />
+          Add a new CTA
+        </a>
       </div>
 
       {/* Submit Button */}
