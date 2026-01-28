@@ -4,55 +4,47 @@ import { CaptionResponseDisplay } from '@/components/CaptionResponseDisplay';
 import { MessageSquare, Loader2 } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { SocialCaptions } from '@/types';
-
 const API_ENDPOINT = 'https://n8n.srv1151765.hstgr.cloud/webhook/caption-generator';
-
 const CaptionGenerator = () => {
-    const [isLoading, setIsLoading] = useState(false);
-    const [response, setResponse] = useState<SocialCaptions | null>(null);
-
-    const handleSubmit = async (payload: CaptionFormPayload) => {
-        setIsLoading(true);
-        setResponse(null);
-
-        try {
-            const res = await fetch(API_ENDPOINT, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(payload),
-            });
-
-            if (!res.ok) {
-                throw new Error(`Upload failed with status ${res.status}`);
-            }
-
-            const data = await res.json();
-            // Handle the case where the API returns an array (take the first item)
-            if (Array.isArray(data) && data.length > 0) {
-                setResponse(data[0]);
-            } else {
-                setResponse(data);
-            }
-            toast({
-                title: 'Success',
-                description: 'Captions generated successfully!',
-            });
-        } catch (error) {
-            console.error('Upload error:', error);
-            toast({
-                title: 'Error',
-                description: error instanceof Error ? error.message : 'Failed to generate captions. Please try again.',
-                variant: 'destructive',
-            });
-        } finally {
-            setIsLoading(false);
-        }
-    };
-
-    return (
-        <div className="min-h-screen bg-background relative overflow-hidden lg:pl-64">
+  const [isLoading, setIsLoading] = useState(false);
+  const [response, setResponse] = useState<SocialCaptions | null>(null);
+  const handleSubmit = async (payload: CaptionFormPayload) => {
+    setIsLoading(true);
+    setResponse(null);
+    try {
+      const res = await fetch(API_ENDPOINT, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(payload)
+      });
+      if (!res.ok) {
+        throw new Error(`Upload failed with status ${res.status}`);
+      }
+      const data = await res.json();
+      // Handle the case where the API returns an array (take the first item)
+      if (Array.isArray(data) && data.length > 0) {
+        setResponse(data[0]);
+      } else {
+        setResponse(data);
+      }
+      toast({
+        title: 'Success',
+        description: 'Captions generated successfully!'
+      });
+    } catch (error) {
+      console.error('Upload error:', error);
+      toast({
+        title: 'Error',
+        description: error instanceof Error ? error.message : 'Failed to generate captions. Please try again.',
+        variant: 'destructive'
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+  return <div className="min-h-screen bg-background relative overflow-hidden lg:pl-64">
             {/* Background Effects */}
             <div className="absolute inset-0 overflow-hidden pointer-events-none">
                 <div className="absolute top-0 left-1/4 w-96 h-96 bg-primary/5 rounded-full blur-3xl" />
@@ -64,7 +56,7 @@ const CaptionGenerator = () => {
 
 
                 {/* Header */}
-                <div className="text-center mb-10">
+                <div className="text-center mb-10 py-[50px]">
                     <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-primary/20 mb-4 glow-primary">
                         <MessageSquare className="w-8 h-8 text-primary" />
                     </div>
@@ -85,33 +77,21 @@ const CaptionGenerator = () => {
 
                     {/* Right Side - Response Display */}
                     <div className="h-fit">
-                        {isLoading ? (
-                            <div className="glass rounded-2xl p-6 md:p-8 shadow-card flex flex-col items-center justify-center min-h-[300px] text-center">
+                        {isLoading ? <div className="glass rounded-2xl p-6 md:p-8 shadow-card flex flex-col items-center justify-center min-h-[300px] text-center">
                                 <Loader2 className="w-12 h-12 text-primary animate-spin mb-4" />
                                 <p className="text-muted-foreground font-medium">Generating captions...</p>
                                 <p className="text-xs text-muted-foreground/70 mt-2">This may take a few moments</p>
-                            </div>
-                        ) : response ? (
-                            <CaptionResponseDisplay
-                                captions={response}
-                                title="Generated Captions"
-                                emptyMessage="No captions were generated."
-                            />
-                        ) : (
-                            <div className="glass rounded-2xl p-6 md:p-8 shadow-card flex flex-col items-center justify-center min-h-[300px] text-center">
+                            </div> : response ? <CaptionResponseDisplay captions={response} title="Generated Captions" emptyMessage="No captions were generated." /> : <div className="glass rounded-2xl p-6 md:p-8 shadow-card flex flex-col items-center justify-center min-h-[300px] text-center">
                                 <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mb-4">
                                     <MessageSquare className="w-8 h-8 text-muted-foreground" />
                                 </div>
                                 <p className="text-muted-foreground">
                                     Result Section
                                 </p>
-                            </div>
-                        )}
+                            </div>}
                     </div>
                 </div>
             </div>
-        </div>
-    );
+        </div>;
 };
-
 export default CaptionGenerator;
