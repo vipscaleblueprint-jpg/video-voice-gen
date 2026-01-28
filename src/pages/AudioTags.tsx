@@ -3,96 +3,83 @@ import { AudioTagsForm, type AudioTagsFormPayload } from '@/components/AudioTags
 import { AudioTagsResponseDisplay } from '@/components/AudioTagsResponseDisplay';
 import { Mic, Loader2 } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
-
 const API_ENDPOINT = 'https://n8n.srv1151765.hstgr.cloud/webhook/audio-tags';
-
 const AudioTags = () => {
-    const [isLoading, setIsLoading] = useState(false);
-    const [response, setResponse] = useState<string[] | null>(null);
-
-    const handleSubmit = async (payload: AudioTagsFormPayload) => {
-        setIsLoading(true);
-        setResponse(null);
-
-        try {
-            const res = await fetch(API_ENDPOINT, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(payload),
-            });
-
-            if (!res.ok) {
-                throw new Error(`Request failed with status ${res.status}`);
-            }
-
-            const text = await res.text();
-            let data;
-            try {
-                data = JSON.parse(text);
-            } catch (e) {
-                // Not JSON, use text directly
-                data = text;
-            }
-
-            if (Array.isArray(data)) {
-                const allScripts: string[] = [];
-                data.forEach((item: any) => {
-                    if (item && typeof item === 'object') {
-                        if (item.output) {
-                            allScripts.push(String(item.output));
-                        } else {
-                            // Extract values from keys like "Script1", "Script2"
-                            Object.values(item).forEach((val) => {
-                                if (val && (typeof val === 'string' || typeof val === 'number')) {
-                                    allScripts.push(String(val));
-                                }
-                            });
-                        }
-                    } else if (typeof item === 'string') {
-                        allScripts.push(item);
-                    }
-                });
-                setResponse(allScripts.length > 0 ? allScripts : [JSON.stringify(data, null, 2)]);
-            } else if (typeof data === 'object' && data !== null) {
-                if ('output' in data) {
-                    // @ts-ignore
-                    setResponse([String(data.output)]);
-                } else {
-                    // Extract all values
-                    const scripts = Object.values(data)
-                        .filter(val => val && (typeof val === 'string' || typeof val === 'number'))
-                        .map(String);
-
-                    if (scripts.length > 0) {
-                        setResponse(scripts);
-                    } else {
-                        setResponse([JSON.stringify(data, null, 2)]);
-                    }
-                }
+  const [isLoading, setIsLoading] = useState(false);
+  const [response, setResponse] = useState<string[] | null>(null);
+  const handleSubmit = async (payload: AudioTagsFormPayload) => {
+    setIsLoading(true);
+    setResponse(null);
+    try {
+      const res = await fetch(API_ENDPOINT, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(payload)
+      });
+      if (!res.ok) {
+        throw new Error(`Request failed with status ${res.status}`);
+      }
+      const text = await res.text();
+      let data;
+      try {
+        data = JSON.parse(text);
+      } catch (e) {
+        // Not JSON, use text directly
+        data = text;
+      }
+      if (Array.isArray(data)) {
+        const allScripts: string[] = [];
+        data.forEach((item: any) => {
+          if (item && typeof item === 'object') {
+            if (item.output) {
+              allScripts.push(String(item.output));
             } else {
-                setResponse([String(data)]);
+              // Extract values from keys like "Script1", "Script2"
+              Object.values(item).forEach(val => {
+                if (val && (typeof val === 'string' || typeof val === 'number')) {
+                  allScripts.push(String(val));
+                }
+              });
             }
-
-            toast({
-                title: 'Success',
-                description: 'Audio tags applied successfully!',
-            });
-        } catch (error) {
-            console.error('API error:', error);
-            toast({
-                title: 'Error',
-                description: error instanceof Error ? error.message : 'Failed to apply tags. Please try again.',
-                variant: 'destructive',
-            });
-        } finally {
-            setIsLoading(false);
+          } else if (typeof item === 'string') {
+            allScripts.push(item);
+          }
+        });
+        setResponse(allScripts.length > 0 ? allScripts : [JSON.stringify(data, null, 2)]);
+      } else if (typeof data === 'object' && data !== null) {
+        if ('output' in data) {
+          // @ts-ignore
+          setResponse([String(data.output)]);
+        } else {
+          // Extract all values
+          const scripts = Object.values(data).filter(val => val && (typeof val === 'string' || typeof val === 'number')).map(String);
+          if (scripts.length > 0) {
+            setResponse(scripts);
+          } else {
+            setResponse([JSON.stringify(data, null, 2)]);
+          }
         }
-    };
-
-    return (
-        <div className="min-h-screen bg-background relative overflow-hidden lg:pl-64">
+      } else {
+        setResponse([String(data)]);
+      }
+      toast({
+        title: 'Success',
+        description: 'Audio tags applied successfully!'
+      });
+    } catch (error) {
+      console.error('API error:', error);
+      toast({
+        title: 'Error',
+        description: error instanceof Error ? error.message : 'Failed to apply tags. Please try again.',
+        variant: 'destructive'
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+  return <div className="min-h-screen bg-background relative overflow-hidden lg:pl-64">
             {/* Background Effects */}
             <div className="absolute inset-0 overflow-hidden pointer-events-none">
                 <div className="absolute top-0 left-1/4 w-96 h-96 bg-primary/5 rounded-full blur-3xl" />
@@ -104,7 +91,7 @@ const AudioTags = () => {
 
 
                 {/* Header */}
-                <div className="text-center mb-10">
+                <div className="text-center mb-10 py-[50px]">
                     <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-primary/20 mb-4 glow-primary">
                         <Mic className="w-8 h-8 text-primary" />
                     </div>
@@ -125,29 +112,21 @@ const AudioTags = () => {
 
                     {/* Right Side - Response Display */}
                     <div className="h-fit">
-                        {isLoading ? (
-                            <div className="glass rounded-2xl p-6 md:p-8 shadow-card flex flex-col items-center justify-center min-h-[300px] text-center">
+                        {isLoading ? <div className="glass rounded-2xl p-6 md:p-8 shadow-card flex flex-col items-center justify-center min-h-[300px] text-center">
                                 <Loader2 className="w-12 h-12 text-primary animate-spin mb-4" />
                                 <p className="text-muted-foreground font-medium">Applying tags...</p>
                                 <p className="text-xs text-muted-foreground/70 mt-2">This may take a few moments</p>
-                            </div>
-                        ) : response ? (
-                            <AudioTagsResponseDisplay response={response} />
-                        ) : (
-                            <div className="glass rounded-2xl p-6 md:p-8 shadow-card flex flex-col items-center justify-center min-h-[300px] text-center">
+                            </div> : response ? <AudioTagsResponseDisplay response={response} /> : <div className="glass rounded-2xl p-6 md:p-8 shadow-card flex flex-col items-center justify-center min-h-[300px] text-center">
                                 <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mb-4">
                                     <Mic className="w-8 h-8 text-muted-foreground" />
                                 </div>
                                 <p className="text-muted-foreground">
                                     Result Section
                                 </p>
-                            </div>
-                        )}
+                            </div>}
                     </div>
                 </div>
             </div>
-        </div>
-    );
+        </div>;
 };
-
 export default AudioTags;
