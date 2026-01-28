@@ -230,6 +230,7 @@ export const VideoUploadForm = ({ onSubmit, onPersonaGenerated, paraphrasedText,
         body: JSON.stringify({
           persona_input: personaInput,
           paraphrased: paraphrasedText || '',
+          client: selectedClient
         })
       });
 

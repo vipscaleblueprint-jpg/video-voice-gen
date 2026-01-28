@@ -314,7 +314,7 @@ export const ResponseDisplay = ({ response, paraphrasedLabel, secondaryAction }:
           icon={Sparkles}
           title="Final Script"
           content={response.persona_line}
-          className="border-primary/20 bg-primary/5"
+          className="border-primary/20 bg-primary/5"  
           preserveWhitespace={true}
         />
       )}
