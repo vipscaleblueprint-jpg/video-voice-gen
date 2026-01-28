@@ -7,274 +7,268 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-
 const CLIENTS_ENDPOINT = 'https://n8n.srv1151765.hstgr.cloud/webhook/client-description';
-
 interface Client {
-    Client: string;
-    Voice: string;
+  Client: string;
+  Voice: string;
 }
-
 type ContentFormat = 'looping-video' | 'carousel';
 type Tone = 'Calm' | 'Bold' | 'Direct' | 'Aspirational' | 'Educational';
-
 type LoopingVideoPillar = 'bts-pain-points' | 'storytelling-motivational' | 'quick-tips' | 'testimonial' | 'storytelling-future';
 type CarouselPillar = 'founders-journey' | 'case-study' | 'educational';
-
 interface UniversalInputs {
-    clientName: string;
-    clientRole: string;
-    clientNiche: string;
-    targetAudience: string;
-    audiencePainPoint: string;
-    desiredOutcome: string;
-    offerCta: string;
-    tone: Tone;
-    format: ContentFormat;
-    referenceText?: string;
+  clientName: string;
+  clientRole: string;
+  clientNiche: string;
+  targetAudience: string;
+  audiencePainPoint: string;
+  desiredOutcome: string;
+  offerCta: string;
+  tone: Tone;
+  format: ContentFormat;
+  referenceText?: string;
 }
-
 const ContentCreationSystem = () => {
-    const [activeSection, setActiveSection] = useState<'looping-video' | 'carousel'>('looping-video');
-    const [selectedPillar, setSelectedPillar] = useState<LoopingVideoPillar | CarouselPillar>('bts-pain-points');
-    const [isLoading, setIsLoading] = useState(false);
-    const [response, setResponse] = useState<any | null>(null);
+  const [activeSection, setActiveSection] = useState<'looping-video' | 'carousel'>('looping-video');
+  const [selectedPillar, setSelectedPillar] = useState<LoopingVideoPillar | CarouselPillar>('bts-pain-points');
+  const [isLoading, setIsLoading] = useState(false);
+  const [response, setResponse] = useState<any | null>(null);
 
-    // Universal inputs state
-    const [inputs, setInputs] = useState<UniversalInputs>({
-        clientName: '',
-        clientRole: '',
-        clientNiche: '',
-        targetAudience: '',
-        audiencePainPoint: '',
-        desiredOutcome: '',
-        offerCta: '',
-        tone: 'Direct',
-        format: 'looping-video',
-        referenceText: ''
-    });
+  // Universal inputs state
+  const [inputs, setInputs] = useState<UniversalInputs>({
+    clientName: '',
+    clientRole: '',
+    clientNiche: '',
+    targetAudience: '',
+    audiencePainPoint: '',
+    desiredOutcome: '',
+    offerCta: '',
+    tone: 'Direct',
+    format: 'looping-video',
+    referenceText: ''
+  });
 
-    // New State for Persona Generator
-    const [personaInput, setPersonaInput] = useState('');
-    const [isSuggestingPersona, setIsSuggestingPersona] = useState(false);
-    const [autoFilledFields, setAutoFilledFields] = useState<Record<string, boolean>>({});
+  // New State for Persona Generator
+  const [personaInput, setPersonaInput] = useState('');
+  const [isSuggestingPersona, setIsSuggestingPersona] = useState(false);
+  const [autoFilledFields, setAutoFilledFields] = useState<Record<string, boolean>>({});
+  const [clients, setClients] = useState<Client[]>([]);
+  const [selectedClient, setSelectedClient] = useState<string>('');
+  const [loadingClients, setLoadingClients] = useState(false);
+  useEffect(() => {
+    const fetchClients = async () => {
+      setLoadingClients(true);
+      try {
+        const res = await fetch(CLIENTS_ENDPOINT);
+        if (!res.ok) throw new Error('Failed to fetch clients');
+        const data = await res.json();
+        setClients(data);
+      } catch (error) {
+        console.error('Failed to fetch clients:', error);
+        toast({
+          title: 'Error',
+          description: 'Failed to load client list',
+          variant: 'destructive'
+        });
+      } finally {
+        setLoadingClients(false);
+      }
+    };
+    fetchClients();
+  }, []);
+  const handleClientChange = (clientId: string) => {
+    setSelectedClient(clientId);
+    const clientData = clients.find(c => c.Client === clientId);
+    if (clientData) {
+      setPersonaInput(clientData.Voice);
+    }
+  };
+  const handleSuggestPersona = async () => {
+    setIsSuggestingPersona(true);
+    try {
+      const API_ENDPOINT = 'https://n8n.srv1151765.hstgr.cloud/webhook/suggest-persona';
+      const res = await fetch(API_ENDPOINT, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          persona: personaInput,
+          format: activeSection,
+          client: selectedClient
+        })
+      });
+      if (!res.ok) {
+        throw new Error(`Request failed with status ${res.status}`);
+      }
+      let data = await res.json();
 
-    const [clients, setClients] = useState<Client[]>([]);
-    const [selectedClient, setSelectedClient] = useState<string>('');
-    const [loadingClients, setLoadingClients] = useState(false);
-
-    useEffect(() => {
-        const fetchClients = async () => {
-            setLoadingClients(true);
-            try {
-                const res = await fetch(CLIENTS_ENDPOINT);
-                if (!res.ok) throw new Error('Failed to fetch clients');
-                const data = await res.json();
-                setClients(data);
-            } catch (error) {
-                console.error('Failed to fetch clients:', error);
-                toast({
-                    title: 'Error',
-                    description: 'Failed to load client list',
-                    variant: 'destructive',
-                });
-            } finally {
-                setLoadingClients(false);
-            }
+      // Handle array response
+      if (Array.isArray(data) && data.length > 0) {
+        data = data[0];
+      }
+      if (data && typeof data === 'object') {
+        // Map the verbose keys from the webhook to our internal state keys
+        const mappedData = {
+          clientName: data['Client Name'] || data.clientName,
+          clientRole: data['Client Role / Title'] || data.clientRole,
+          clientNiche: data['Client Niche'] || data.clientNiche,
+          targetAudience: data['Target Audience'] || data.targetAudience,
+          audiencePainPoint: data['Primary Audience Pain Point'] || data.audiencePainPoint,
+          desiredOutcome: data['Primary Desired Outcome'] || data.desiredOutcome,
+          offerCta: data['Offer / CTA'] || data.offerCta,
+          tone: data['Tone'] || data.tone,
+          contentPillar: data['Content Pillar'] || data.contentPillar
         };
 
-        fetchClients();
-    }, []);
-
-    const handleClientChange = (clientId: string) => {
-        setSelectedClient(clientId);
-        const clientData = clients.find(c => c.Client === clientId);
-        if (clientData) {
-            setPersonaInput(clientData.Voice);
+        // Normalize Tone
+        let normalizedTone: Tone = inputs.tone;
+        if (mappedData.tone) {
+          const toneString = mappedData.tone.toLowerCase().trim();
+          const allowedTones: Tone[] = ['Calm', 'Bold', 'Direct', 'Aspirational', 'Educational'];
+          const foundTone = allowedTones.find(t => t.toLowerCase() === toneString);
+          if (foundTone) {
+            normalizedTone = foundTone;
+          }
         }
-    };
+        setInputs(prev => ({
+          ...prev,
+          clientName: mappedData.clientName || prev.clientName,
+          clientRole: mappedData.clientRole || prev.clientRole,
+          clientNiche: mappedData.clientNiche || prev.clientNiche,
+          targetAudience: mappedData.targetAudience || prev.targetAudience,
+          audiencePainPoint: mappedData.audiencePainPoint || prev.audiencePainPoint,
+          desiredOutcome: mappedData.desiredOutcome || prev.desiredOutcome,
+          offerCta: mappedData.offerCta || prev.offerCta,
+          tone: normalizedTone
+        }));
 
-    const handleSuggestPersona = async () => {
-        setIsSuggestingPersona(true);
-        try {
-            const API_ENDPOINT = 'https://n8n.srv1151765.hstgr.cloud/webhook/suggest-persona';
+        // Mark fields as auto-filled
+        const newAutoFilled: Record<string, boolean> = {};
+        Object.keys(mappedData).forEach(key => {
+          if (mappedData[key as keyof typeof mappedData]) {
+            newAutoFilled[key] = true;
+          }
+        });
+        setAutoFilledFields(newAutoFilled);
 
-            const res = await fetch(API_ENDPOINT, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    persona: personaInput,
-                    format: activeSection,
-                    client: selectedClient
-                }),
-            });
+        // Handle Content Pillar mapping
+        if (mappedData.contentPillar) {
+          const pillarString = mappedData.contentPillar.toLowerCase().trim();
 
-            if (!res.ok) {
-                throw new Error(`Request failed with status ${res.status}`);
-            }
-
-            let data = await res.json();
-
-            // Handle array response
-            if (Array.isArray(data) && data.length > 0) {
-                data = data[0];
-            }
-
-            if (data && typeof data === 'object') {
-                // Map the verbose keys from the webhook to our internal state keys
-                const mappedData = {
-                    clientName: data['Client Name'] || data.clientName,
-                    clientRole: data['Client Role / Title'] || data.clientRole,
-                    clientNiche: data['Client Niche'] || data.clientNiche,
-                    targetAudience: data['Target Audience'] || data.targetAudience,
-                    audiencePainPoint: data['Primary Audience Pain Point'] || data.audiencePainPoint,
-                    desiredOutcome: data['Primary Desired Outcome'] || data.desiredOutcome,
-                    offerCta: data['Offer / CTA'] || data.offerCta,
-                    tone: data['Tone'] || data.tone,
-                    contentPillar: data['Content Pillar'] || data.contentPillar
-                };
-
-                // Normalize Tone
-                let normalizedTone: Tone = inputs.tone;
-                if (mappedData.tone) {
-                    const toneString = mappedData.tone.toLowerCase().trim();
-                    const allowedTones: Tone[] = ['Calm', 'Bold', 'Direct', 'Aspirational', 'Educational'];
-                    const foundTone = allowedTones.find(t => t.toLowerCase() === toneString);
-                    if (foundTone) {
-                        normalizedTone = foundTone;
-                    }
-                }
-
-                setInputs(prev => ({
-                    ...prev,
-                    clientName: mappedData.clientName || prev.clientName,
-                    clientRole: mappedData.clientRole || prev.clientRole,
-                    clientNiche: mappedData.clientNiche || prev.clientNiche,
-                    targetAudience: mappedData.targetAudience || prev.targetAudience,
-                    audiencePainPoint: mappedData.audiencePainPoint || prev.audiencePainPoint,
-                    desiredOutcome: mappedData.desiredOutcome || prev.desiredOutcome,
-                    offerCta: mappedData.offerCta || prev.offerCta,
-                    tone: normalizedTone,
-                }));
-
-                // Mark fields as auto-filled
-                const newAutoFilled: Record<string, boolean> = {};
-                Object.keys(mappedData).forEach(key => {
-                    if (mappedData[key as keyof typeof mappedData]) {
-                        newAutoFilled[key] = true;
-                    }
-                });
-                setAutoFilledFields(newAutoFilled);
-
-                // Handle Content Pillar mapping
-                if (mappedData.contentPillar) {
-                    const pillarString = mappedData.contentPillar.toLowerCase().trim();
-
-                    // Combine all pillars to search through
-                    const allPillars = [...loopingVideoPillars, ...carouselPillars];
-
-                    const foundPillar = allPillars.find(p =>
-                        p.label.toLowerCase() === pillarString ||
-                        p.value.toLowerCase() === pillarString
-                    );
-
-                    if (foundPillar) {
-                        setSelectedPillar(foundPillar.value);
-                        setAutoFilledFields(prev => ({ ...prev, contentPillar: true }));
-                    }
-                }
-            }
-
-            toast({
-                title: 'Persona Analyzed',
-                description: 'Client details have been updated based on the persona.',
-            });
-        } catch (error) {
-            console.error('Persona usage error:', error);
-            toast({
-                title: 'Error',
-                description: 'Failed to analyze persona. Please try again.',
-                variant: 'destructive',
-            });
-        } finally {
-            setIsSuggestingPersona(false);
+          // Combine all pillars to search through
+          const allPillars = [...loopingVideoPillars, ...carouselPillars];
+          const foundPillar = allPillars.find(p => p.label.toLowerCase() === pillarString || p.value.toLowerCase() === pillarString);
+          if (foundPillar) {
+            setSelectedPillar(foundPillar.value);
+            setAutoFilledFields(prev => ({
+              ...prev,
+              contentPillar: true
+            }));
+          }
         }
-    };
-
-    const loopingVideoPillars: { value: LoopingVideoPillar; label: string }[] = [
-        { value: 'bts-pain-points', label: 'BTS / Pain Points' },
-        { value: 'storytelling-motivational', label: 'Storytelling – Motivational' },
-        { value: 'quick-tips', label: 'Quick Tips / Hacks' },
-        { value: 'testimonial', label: 'Testimonial' },
-        { value: 'storytelling-future', label: 'Storytelling – Future Pacing' },
-    ];
-
-    const carouselPillars: { value: CarouselPillar; label: string }[] = [
-        { value: 'founders-journey', label: "Founder's Journey" },
-        { value: 'case-study', label: 'Case Study' },
-        { value: 'educational', label: 'Educational' },
-    ];
-
-    const handleGenerate = async () => {
-        setIsLoading(true);
-        setResponse(null);
-
-        try {
-            const API_ENDPOINT = 'https://n8n.srv1151765.hstgr.cloud/webhook/content-gen';
-
-            const payload = {
-                ...inputs,
-                contentPillar: selectedPillar,
-                format: activeSection // Will be either 'looping-video' or 'carousel'
-            };
-
-            const res = await fetch(API_ENDPOINT, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(payload),
-            });
-
-            if (!res.ok) {
-                throw new Error(`Request failed with status ${res.status}`);
-            }
-
-            const data = await res.json();
-            setResponse(data);
-
-            toast({
-                title: 'Success',
-                description: 'Content generated successfully!',
-            });
-        } catch (error) {
-            console.error('Generation error:', error);
-            toast({
-                title: 'Error',
-                description: error instanceof Error ? error.message : 'Failed to generate content. Please try again.',
-                variant: 'destructive',
-            });
-        } finally {
-            setIsLoading(false);
-        }
-    };
-
-    const updateInput = (field: keyof UniversalInputs, value: string) => {
-        setInputs(prev => ({ ...prev, [field]: value }));
-        // Remove auto-filled status when user manually edits
-        if (autoFilledFields[field]) {
-            setAutoFilledFields(prev => {
-                const next = { ...prev };
-                delete next[field];
-                return next;
-            });
-        }
-    };
-
-    return (
-        <div className="min-h-screen bg-background relative overflow-hidden lg:pl-64">
+      }
+      toast({
+        title: 'Persona Analyzed',
+        description: 'Client details have been updated based on the persona.'
+      });
+    } catch (error) {
+      console.error('Persona usage error:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to analyze persona. Please try again.',
+        variant: 'destructive'
+      });
+    } finally {
+      setIsSuggestingPersona(false);
+    }
+  };
+  const loopingVideoPillars: {
+    value: LoopingVideoPillar;
+    label: string;
+  }[] = [{
+    value: 'bts-pain-points',
+    label: 'BTS / Pain Points'
+  }, {
+    value: 'storytelling-motivational',
+    label: 'Storytelling – Motivational'
+  }, {
+    value: 'quick-tips',
+    label: 'Quick Tips / Hacks'
+  }, {
+    value: 'testimonial',
+    label: 'Testimonial'
+  }, {
+    value: 'storytelling-future',
+    label: 'Storytelling – Future Pacing'
+  }];
+  const carouselPillars: {
+    value: CarouselPillar;
+    label: string;
+  }[] = [{
+    value: 'founders-journey',
+    label: "Founder's Journey"
+  }, {
+    value: 'case-study',
+    label: 'Case Study'
+  }, {
+    value: 'educational',
+    label: 'Educational'
+  }];
+  const handleGenerate = async () => {
+    setIsLoading(true);
+    setResponse(null);
+    try {
+      const API_ENDPOINT = 'https://n8n.srv1151765.hstgr.cloud/webhook/content-gen';
+      const payload = {
+        ...inputs,
+        contentPillar: selectedPillar,
+        format: activeSection // Will be either 'looping-video' or 'carousel'
+      };
+      const res = await fetch(API_ENDPOINT, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(payload)
+      });
+      if (!res.ok) {
+        throw new Error(`Request failed with status ${res.status}`);
+      }
+      const data = await res.json();
+      setResponse(data);
+      toast({
+        title: 'Success',
+        description: 'Content generated successfully!'
+      });
+    } catch (error) {
+      console.error('Generation error:', error);
+      toast({
+        title: 'Error',
+        description: error instanceof Error ? error.message : 'Failed to generate content. Please try again.',
+        variant: 'destructive'
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+  const updateInput = (field: keyof UniversalInputs, value: string) => {
+    setInputs(prev => ({
+      ...prev,
+      [field]: value
+    }));
+    // Remove auto-filled status when user manually edits
+    if (autoFilledFields[field]) {
+      setAutoFilledFields(prev => {
+        const next = {
+          ...prev
+        };
+        delete next[field];
+        return next;
+      });
+    }
+  };
+  return <div className="min-h-screen bg-background relative overflow-hidden lg:pl-64">
             {/* Background Effects */}
             <div className="absolute inset-0 overflow-hidden pointer-events-none">
                 <div className="absolute top-0 left-1/4 w-96 h-96 bg-primary/5 rounded-full blur-3xl" />
@@ -283,7 +277,7 @@ const ContentCreationSystem = () => {
 
             <div className="relative z-10 container max-w-7xl mx-auto px-4 py-12">
                 {/* Header */}
-                <div className="text-center mb-10">
+                <div className="text-center mb-10 py-[50px]">
                     <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-primary/20 mb-4 glow-primary">
                         <FileText className="w-8 h-8 text-primary" />
                     </div>
@@ -297,60 +291,48 @@ const ContentCreationSystem = () => {
 
                 {/* Section Navigation */}
                 <div className="glass rounded-2xl p-2 mb-8 inline-flex w-full max-w-md mx-auto">
-                    <button
-                        onClick={() => {
-                            if (activeSection !== 'looping-video') {
-                                setActiveSection('looping-video');
-                                setSelectedPillar('bts-pain-points');
-                                setResponse(null);
-                                setAutoFilledFields({});
-                                setInputs({
-                                    clientName: '',
-                                    clientRole: '',
-                                    clientNiche: '',
-                                    targetAudience: '',
-                                    audiencePainPoint: '',
-                                    desiredOutcome: '',
-                                    offerCta: '',
-                                    tone: 'Direct',
-                                    format: 'looping-video',
-                                    referenceText: ''
-                                });
-                            }
-                        }}
-                        className={`flex-1 px-6 py-3 rounded-xl text-sm font-medium transition-all duration-300 ${activeSection === 'looping-video'
-                            ? 'bg-primary text-primary-foreground shadow-glow'
-                            : 'text-muted-foreground hover:text-foreground hover:bg-white/5'
-                            }`}
-                    >
+                    <button onClick={() => {
+          if (activeSection !== 'looping-video') {
+            setActiveSection('looping-video');
+            setSelectedPillar('bts-pain-points');
+            setResponse(null);
+            setAutoFilledFields({});
+            setInputs({
+              clientName: '',
+              clientRole: '',
+              clientNiche: '',
+              targetAudience: '',
+              audiencePainPoint: '',
+              desiredOutcome: '',
+              offerCta: '',
+              tone: 'Direct',
+              format: 'looping-video',
+              referenceText: ''
+            });
+          }
+        }} className={`flex-1 px-6 py-3 rounded-xl text-sm font-medium transition-all duration-300 ${activeSection === 'looping-video' ? 'bg-primary text-primary-foreground shadow-glow' : 'text-muted-foreground hover:text-foreground hover:bg-white/5'}`}>
                         Text Overlay Videos
                     </button>
-                    <button
-                        onClick={() => {
-                            if (activeSection !== 'carousel') {
-                                setActiveSection('carousel');
-                                setSelectedPillar('founders-journey');
-                                setResponse(null);
-                                setAutoFilledFields({});
-                                setInputs({
-                                    clientName: '',
-                                    clientRole: '',
-                                    clientNiche: '',
-                                    targetAudience: '',
-                                    audiencePainPoint: '',
-                                    desiredOutcome: '',
-                                    offerCta: '',
-                                    tone: 'Direct',
-                                    format: 'carousel',
-                                    referenceText: ''
-                                });
-                            }
-                        }}
-                        className={`flex-1 px-6 py-3 rounded-xl text-sm font-medium transition-all duration-300 ${activeSection === 'carousel'
-                            ? 'bg-primary text-primary-foreground shadow-glow'
-                            : 'text-muted-foreground hover:text-foreground hover:bg-white/5'
-                            }`}
-                    >
+                    <button onClick={() => {
+          if (activeSection !== 'carousel') {
+            setActiveSection('carousel');
+            setSelectedPillar('founders-journey');
+            setResponse(null);
+            setAutoFilledFields({});
+            setInputs({
+              clientName: '',
+              clientRole: '',
+              clientNiche: '',
+              targetAudience: '',
+              audiencePainPoint: '',
+              desiredOutcome: '',
+              offerCta: '',
+              tone: 'Direct',
+              format: 'carousel',
+              referenceText: ''
+            });
+          }
+        }} className={`flex-1 px-6 py-3 rounded-xl text-sm font-medium transition-all duration-300 ${activeSection === 'carousel' ? 'bg-primary text-primary-foreground shadow-glow' : 'text-muted-foreground hover:text-foreground hover:bg-white/5'}`}>
                         Carousels
                     </button>
                 </div>
@@ -378,38 +360,19 @@ const ContentCreationSystem = () => {
                                                 <SelectValue placeholder={loadingClients ? "Loading clients..." : "Select a client profile"} />
                                             </SelectTrigger>
                                             <SelectContent>
-                                                {clients.map((client) => (
-                                                    <SelectItem key={client.Client} value={client.Client}>
+                                                {clients.map(client => <SelectItem key={client.Client} value={client.Client}>
                                                         {client.Client}
-                                                    </SelectItem>
-                                                ))}
+                                                    </SelectItem>)}
                                             </SelectContent>
                                         </Select>
                                     </div>
-                                    <Textarea
-                                        id="personaInput"
-                                        value={personaInput}
-                                        onChange={(e) => setPersonaInput(e.target.value)}
-                                        placeholder="Paste persona description, bio, or 'About Me' text here..."
-                                        className="bg-background/50"
-                                        rows={3}
-                                    />
+                                    <Textarea id="personaInput" value={personaInput} onChange={e => setPersonaInput(e.target.value)} placeholder="Paste persona description, bio, or 'About Me' text here..." className="bg-background/50" rows={3} />
                                 </div>
-                                <Button
-                                    onClick={handleSuggestPersona}
-                                    disabled={isSuggestingPersona || !personaInput.trim()}
-                                    variant="secondary"
-                                    className="w-full"
-                                    size="sm"
-                                >
-                                    {isSuggestingPersona ? (
-                                        <>
+                                <Button onClick={handleSuggestPersona} disabled={isSuggestingPersona || !personaInput.trim()} variant="secondary" className="w-full" size="sm">
+                                    {isSuggestingPersona ? <>
                                             <Loader2 className="mr-2 h-3 w-3 animate-spin" />
                                             Analyzing Persona...
-                                        </>
-                                    ) : (
-                                        'Auto-Fill Client Details'
-                                    )}
+                                        </> : 'Auto-Fill Client Details'}
                                 </Button>
                             </div>
 
@@ -420,12 +383,7 @@ const ContentCreationSystem = () => {
                                     Client Name
                                     {autoFilledFields.clientName && <span className="ml-2 text-xs text-primary animate-in fade-in">✨ Auto-filled</span>}
                                 </Label>
-                                <Input
-                                    id="clientName"
-                                    value={inputs.clientName}
-                                    onChange={(e) => updateInput('clientName', e.target.value)}
-                                    placeholder="Enter client name"
-                                />
+                                <Input id="clientName" value={inputs.clientName} onChange={e => updateInput('clientName', e.target.value)} placeholder="Enter client name" />
                             </div>
 
                             <div>
@@ -433,12 +391,7 @@ const ContentCreationSystem = () => {
                                     Client Role / Title
                                     {autoFilledFields.clientRole && <span className="ml-2 text-xs text-primary animate-in fade-in">✨ Auto-filled</span>}
                                 </Label>
-                                <Input
-                                    id="clientRole"
-                                    value={inputs.clientRole}
-                                    onChange={(e) => updateInput('clientRole', e.target.value)}
-                                    placeholder="e.g., Business Coach, Designer"
-                                />
+                                <Input id="clientRole" value={inputs.clientRole} onChange={e => updateInput('clientRole', e.target.value)} placeholder="e.g., Business Coach, Designer" />
                             </div>
 
                             <div>
@@ -446,12 +399,7 @@ const ContentCreationSystem = () => {
                                     Client Niche
                                     {autoFilledFields.clientNiche && <span className="ml-2 text-xs text-primary animate-in fade-in">✨ Auto-filled</span>}
                                 </Label>
-                                <Input
-                                    id="clientNiche"
-                                    value={inputs.clientNiche}
-                                    onChange={(e) => updateInput('clientNiche', e.target.value)}
-                                    placeholder="e.g., Personal Branding, SaaS Marketing"
-                                />
+                                <Input id="clientNiche" value={inputs.clientNiche} onChange={e => updateInput('clientNiche', e.target.value)} placeholder="e.g., Personal Branding, SaaS Marketing" />
                             </div>
 
                             <div>
@@ -459,12 +407,7 @@ const ContentCreationSystem = () => {
                                     Target Audience
                                     {autoFilledFields.targetAudience && <span className="ml-2 text-xs text-primary animate-in fade-in">✨ Auto-filled</span>}
                                 </Label>
-                                <Input
-                                    id="targetAudience"
-                                    value={inputs.targetAudience}
-                                    onChange={(e) => updateInput('targetAudience', e.target.value)}
-                                    placeholder="e.g., Entrepreneurs, Freelancers"
-                                />
+                                <Input id="targetAudience" value={inputs.targetAudience} onChange={e => updateInput('targetAudience', e.target.value)} placeholder="e.g., Entrepreneurs, Freelancers" />
                             </div>
 
                             <div>
@@ -472,13 +415,7 @@ const ContentCreationSystem = () => {
                                     Primary Audience Pain Point
                                     {autoFilledFields.audiencePainPoint && <span className="ml-2 text-xs text-primary animate-in fade-in">✨ Auto-filled</span>}
                                 </Label>
-                                <Textarea
-                                    id="audiencePainPoint"
-                                    value={inputs.audiencePainPoint}
-                                    onChange={(e) => updateInput('audiencePainPoint', e.target.value)}
-                                    placeholder="Describe the main challenge your audience faces"
-                                    rows={3}
-                                />
+                                <Textarea id="audiencePainPoint" value={inputs.audiencePainPoint} onChange={e => updateInput('audiencePainPoint', e.target.value)} placeholder="Describe the main challenge your audience faces" rows={3} />
                             </div>
 
                             <div>
@@ -486,13 +423,7 @@ const ContentCreationSystem = () => {
                                     Primary Desired Outcome
                                     {autoFilledFields.desiredOutcome && <span className="ml-2 text-xs text-primary animate-in fade-in">✨ Auto-filled</span>}
                                 </Label>
-                                <Textarea
-                                    id="desiredOutcome"
-                                    value={inputs.desiredOutcome}
-                                    onChange={(e) => updateInput('desiredOutcome', e.target.value)}
-                                    placeholder="What result does your audience want?"
-                                    rows={3}
-                                />
+                                <Textarea id="desiredOutcome" value={inputs.desiredOutcome} onChange={e => updateInput('desiredOutcome', e.target.value)} placeholder="What result does your audience want?" rows={3} />
                             </div>
 
                             <div>
@@ -500,12 +431,7 @@ const ContentCreationSystem = () => {
                                     Offer / CTA
                                     {autoFilledFields.offerCta && <span className="ml-2 text-xs text-primary animate-in fade-in">✨ Auto-filled</span>}
                                 </Label>
-                                <Input
-                                    id="offerCta"
-                                    value={inputs.offerCta}
-                                    onChange={(e) => updateInput('offerCta', e.target.value)}
-                                    placeholder="e.g., DM for details, Link in bio"
-                                />
+                                <Input id="offerCta" value={inputs.offerCta} onChange={e => updateInput('offerCta', e.target.value)} placeholder="e.g., DM for details, Link in bio" />
                             </div>
 
                             <div>
@@ -513,7 +439,7 @@ const ContentCreationSystem = () => {
                                     Tone
                                     {autoFilledFields.tone && <span className="ml-2 text-xs text-primary animate-in fade-in">✨ Auto-filled</span>}
                                 </Label>
-                                <Select value={inputs.tone} onValueChange={(value) => updateInput('tone', value)}>
+                                <Select value={inputs.tone} onValueChange={value => updateInput('tone', value)}>
                                     <SelectTrigger>
                                         <SelectValue placeholder="Select tone" />
                                     </SelectTrigger>
@@ -533,74 +459,42 @@ const ContentCreationSystem = () => {
                                     Content Pillar
                                     {autoFilledFields.contentPillar && <span className="ml-2 text-xs text-primary animate-in fade-in">✨ Auto-filled</span>}
                                 </Label>
-                                <Select
-                                    value={selectedPillar}
-                                    onValueChange={(value) => setSelectedPillar(value as any)}
-                                >
+                                <Select value={selectedPillar} onValueChange={value => setSelectedPillar(value as any)}>
                                     <SelectTrigger>
                                         <SelectValue placeholder="Select content pillar" />
                                     </SelectTrigger>
                                     <SelectContent>
-                                        {activeSection === 'looping-video'
-                                            ? loopingVideoPillars.map(pillar => (
-                                                <SelectItem key={pillar.value} value={pillar.value}>
+                                        {activeSection === 'looping-video' ? loopingVideoPillars.map(pillar => <SelectItem key={pillar.value} value={pillar.value}>
                                                     {pillar.label}
-                                                </SelectItem>
-                                            ))
-                                            : carouselPillars.map(pillar => (
-                                                <SelectItem key={pillar.value} value={pillar.value}>
+                                                </SelectItem>) : carouselPillars.map(pillar => <SelectItem key={pillar.value} value={pillar.value}>
                                                     {pillar.label}
-                                                </SelectItem>
-                                            ))
-                                        }
+                                                </SelectItem>)}
                                     </SelectContent>
                                 </Select>
                             </div>
 
                             {/* Reference Text (Carousel Only) */}
-                            {activeSection === 'carousel' && (
-                                <div>
+                            {activeSection === 'carousel' && <div>
                                     <Label htmlFor="referenceText">Reference Text (Optional)</Label>
-                                    <Textarea
-                                        id="referenceText"
-                                        value={inputs.referenceText}
-                                        onChange={(e) => updateInput('referenceText', e.target.value)}
-                                        placeholder="Paste reference content here (recommended for Case Study and Educational carousels)"
-                                        rows={5}
-                                    />
-                                </div>
-                            )}
+                                    <Textarea id="referenceText" value={inputs.referenceText} onChange={e => updateInput('referenceText', e.target.value)} placeholder="Paste reference content here (recommended for Case Study and Educational carousels)" rows={5} />
+                                </div>}
 
-                            <Button
-                                onClick={handleGenerate}
-                                disabled={isLoading}
-                                className="w-full"
-                                size="lg"
-                            >
-                                {isLoading ? (
-                                    <>
+                            <Button onClick={handleGenerate} disabled={isLoading} className="w-full" size="lg">
+                                {isLoading ? <>
                                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                                         Generating...
-                                    </>
-                                ) : (
-                                    'Generate Content'
-                                )}
+                                    </> : 'Generate Content'}
                             </Button>
                         </div>
                     </div>
 
                     {/* Right Side - Response Display */}
                     <div className="h-fit">
-                        {isLoading ? (
-                            <div className="glass rounded-2xl p-6 md:p-8 shadow-card flex flex-col items-center justify-center min-h-[400px] text-center">
+                        {isLoading ? <div className="glass rounded-2xl p-6 md:p-8 shadow-card flex flex-col items-center justify-center min-h-[400px] text-center">
                                 <Loader2 className="w-12 h-12 text-primary animate-spin mb-4" />
                                 <p className="text-muted-foreground font-medium">Generating your content...</p>
                                 <p className="text-xs text-muted-foreground/70 mt-2">This may take a few moments</p>
-                            </div>
-                        ) : response ? (
-                            <ContentResponseDisplay response={response} format={activeSection} />
-                        ) : (
-                            <div className="glass rounded-2xl p-6 md:p-8 shadow-card flex flex-col items-center justify-center min-h-[400px] text-center">
+                            </div> : response ? <ContentResponseDisplay response={response} format={activeSection} /> : <div className="glass rounded-2xl p-6 md:p-8 shadow-card flex flex-col items-center justify-center min-h-[400px] text-center">
                                 <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mb-4">
                                     <FileText className="w-8 h-8 text-muted-foreground" />
                                 </div>
@@ -608,13 +502,10 @@ const ContentCreationSystem = () => {
                                 <p className="text-xs text-muted-foreground/70 mt-2">
                                     Fill the form and click "Generate Content"
                                 </p>
-                            </div>
-                        )}
+                            </div>}
                     </div>
                 </div>
             </div>
-        </div>
-    );
+        </div>;
 };
-
 export default ContentCreationSystem;
