@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { FileText, Loader2 } from 'lucide-react';
+import { FileText, Loader2, ExternalLink } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { ContentResponseDisplay } from '@/components/ContentResponseDisplay';
 import { Button } from '@/components/ui/button';
@@ -8,6 +8,10 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 const CLIENTS_ENDPOINT = 'https://n8n.srv1151765.hstgr.cloud/webhook/client-description';
+interface CTAOption {
+  cta: string;
+}
+const CTA_ENDPOINT = 'https://n8n.srv1151765.hstgr.cloud/webhook/e5260e03-6ded-4448-ab29-52f88af0d35b';
 interface Client {
   Client: string;
   Voice: string;
@@ -55,6 +59,8 @@ const ContentCreationSystem = () => {
   const [clients, setClients] = useState<Client[]>([]);
   const [selectedClient, setSelectedClient] = useState<string>('');
   const [loadingClients, setLoadingClients] = useState(false);
+  const [ctaOptions, setCtaOptions] = useState<CTAOption[]>([]);
+  const [isLoadingCtas, setIsLoadingCtas] = useState(true);
   useEffect(() => {
     const fetchClients = async () => {
       setLoadingClients(true);
@@ -75,6 +81,23 @@ const ContentCreationSystem = () => {
       }
     };
     fetchClients();
+  }, []);
+  // Fetch CTA options
+  useEffect(() => {
+    const fetchCtas = async () => {
+      try {
+        const res = await fetch(CTA_ENDPOINT);
+        if (res.ok) {
+          const data = await res.json();
+          setCtaOptions(data);
+        }
+      } catch (err) {
+        console.error('Failed to fetch CTAs:', err);
+      } finally {
+        setIsLoadingCtas(false);
+      }
+    };
+    fetchCtas();
   }, []);
   const handleClientChange = (clientId: string) => {
     setSelectedClient(clientId);
@@ -269,29 +292,29 @@ const ContentCreationSystem = () => {
     }
   };
   return <div className="min-h-screen bg-background relative overflow-hidden lg:pl-64">
-            {/* Background Effects */}
-            <div className="absolute inset-0 overflow-hidden pointer-events-none">
-                <div className="absolute top-0 left-1/4 w-96 h-96 bg-primary/5 rounded-full blur-3xl" />
-                <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-accent/5 rounded-full blur-3xl" />
-            </div>
+    {/* Background Effects */}
+    <div className="absolute inset-0 overflow-hidden pointer-events-none">
+      <div className="absolute top-0 left-1/4 w-96 h-96 bg-primary/5 rounded-full blur-3xl" />
+      <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-accent/5 rounded-full blur-3xl" />
+    </div>
 
-            <div className="relative z-10 container max-w-7xl mx-auto px-4 py-12">
-                {/* Header */}
-                <div className="text-center mb-10 py-[50px]">
-                    <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-primary/20 mb-4 glow-primary">
-                        <FileText className="w-8 h-8 text-primary" />
-                    </div>
-                    <h1 className="text-3xl md:text-4xl font-bold text-foreground mb-2">
-                        Content Creation <span className="gradient-text">System</span>
-                    </h1>
-                    <p className="text-muted-foreground max-w-2xl mx-auto">
-                        Generate ready-to-produce social media scripts for Text Overlay Looping Videos and Carousels
-                    </p>
-                </div>
+    <div className="relative z-10 container max-w-7xl mx-auto px-4 py-12">
+      {/* Header */}
+      <div className="text-center mb-10 py-[50px]">
+        <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-primary/20 mb-4 glow-primary">
+          <FileText className="w-8 h-8 text-primary" />
+        </div>
+        <h1 className="text-3xl md:text-4xl font-bold text-foreground mb-2">
+          Content Creation <span className="gradient-text">System</span>
+        </h1>
+        <p className="text-muted-foreground max-w-2xl mx-auto">
+          Generate ready-to-produce social media scripts for Text Overlay Looping Videos and Carousels
+        </p>
+      </div>
 
-                {/* Section Navigation */}
-                <div className="glass rounded-2xl p-2 mb-8 inline-flex w-full max-w-md mx-auto">
-                    <button onClick={() => {
+      {/* Section Navigation */}
+      <div className="glass rounded-2xl p-2 mb-8 inline-flex w-full max-w-md mx-auto">
+        <button onClick={() => {
           if (activeSection !== 'looping-video') {
             setActiveSection('looping-video');
             setSelectedPillar('bts-pain-points');
@@ -311,9 +334,9 @@ const ContentCreationSystem = () => {
             });
           }
         }} className={`flex-1 px-6 py-3 rounded-xl text-sm font-medium transition-all duration-300 ${activeSection === 'looping-video' ? 'bg-primary text-primary-foreground shadow-glow' : 'text-muted-foreground hover:text-foreground hover:bg-white/5'}`}>
-                        Text Overlay Videos
-                    </button>
-                    <button onClick={() => {
+          Text Overlay Videos
+        </button>
+        <button onClick={() => {
           if (activeSection !== 'carousel') {
             setActiveSection('carousel');
             setSelectedPillar('founders-journey');
@@ -333,179 +356,213 @@ const ContentCreationSystem = () => {
             });
           }
         }} className={`flex-1 px-6 py-3 rounded-xl text-sm font-medium transition-all duration-300 ${activeSection === 'carousel' ? 'bg-primary text-primary-foreground shadow-glow' : 'text-muted-foreground hover:text-foreground hover:bg-white/5'}`}>
-                        Carousels
-                    </button>
+          Carousels
+        </button>
+      </div>
+
+      {/* Main Content */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        {/* Left Side - Input Form */}
+        <div className="glass rounded-2xl p-6 md:p-8 shadow-card h-fit">
+          <h2 className="text-xl font-bold text-foreground mb-6">Universal Inputs</h2>
+
+          <div className="space-y-4">
+
+            {/* NEW: Persona Input Section */}
+            <div className="p-4 rounded-xl bg-primary/5 border border-primary/10 space-y-3">
+              <div>
+                <Label htmlFor="personaInput" className="text-primary font-semibold flex items-center gap-2">
+                  ✨ Client Details Generator
+                </Label>
+                <p className="text-xs text-muted-foreground mb-2">
+                  Paste a persona description or bio to auto-fill the client details.
+                </p>
+                <div className="mb-3">
+                  <Select value={selectedClient} onValueChange={handleClientChange}>
+                    <SelectTrigger className="bg-background/50 border-primary/20">
+                      <SelectValue placeholder={loadingClients ? "Loading clients..." : "Select a client profile"} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {clients.map(client => <SelectItem key={client.Client} value={client.Client}>
+                        {client.Client}
+                      </SelectItem>)}
+                    </SelectContent>
+                  </Select>
                 </div>
-
-                {/* Main Content */}
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                    {/* Left Side - Input Form */}
-                    <div className="glass rounded-2xl p-6 md:p-8 shadow-card h-fit">
-                        <h2 className="text-xl font-bold text-foreground mb-6">Universal Inputs</h2>
-
-                        <div className="space-y-4">
-
-                            {/* NEW: Persona Input Section */}
-                            <div className="p-4 rounded-xl bg-primary/5 border border-primary/10 space-y-3">
-                                <div>
-                                    <Label htmlFor="personaInput" className="text-primary font-semibold flex items-center gap-2">
-                                        ✨ Client Details Generator
-                                    </Label>
-                                    <p className="text-xs text-muted-foreground mb-2">
-                                        Paste a persona description or bio to auto-fill the client details.
-                                    </p>
-                                    <div className="mb-3">
-                                        <Select value={selectedClient} onValueChange={handleClientChange}>
-                                            <SelectTrigger className="bg-background/50 border-primary/20">
-                                                <SelectValue placeholder={loadingClients ? "Loading clients..." : "Select a client profile"} />
-                                            </SelectTrigger>
-                                            <SelectContent>
-                                                {clients.map(client => <SelectItem key={client.Client} value={client.Client}>
-                                                        {client.Client}
-                                                    </SelectItem>)}
-                                            </SelectContent>
-                                        </Select>
-                                    </div>
-                                    <Textarea id="personaInput" value={personaInput} onChange={e => setPersonaInput(e.target.value)} placeholder="Paste persona description, bio, or 'About Me' text here..." className="bg-background/50" rows={3} />
-                                </div>
-                                <Button onClick={handleSuggestPersona} disabled={isSuggestingPersona || !personaInput.trim()} variant="secondary" className="w-full" size="sm">
-                                    {isSuggestingPersona ? <>
-                                            <Loader2 className="mr-2 h-3 w-3 animate-spin" />
-                                            Analyzing Persona...
-                                        </> : 'Auto-Fill Client Details'}
-                                </Button>
-                            </div>
-
-                            <div className="h-px bg-border/50 my-4" />
-
-                            <div>
-                                <Label htmlFor="clientName">
-                                    Client Name
-                                    {autoFilledFields.clientName && <span className="ml-2 text-xs text-primary animate-in fade-in">✨ Auto-filled</span>}
-                                </Label>
-                                <Input id="clientName" value={inputs.clientName} onChange={e => updateInput('clientName', e.target.value)} placeholder="Enter client name" />
-                            </div>
-
-                            <div>
-                                <Label htmlFor="clientRole">
-                                    Client Role / Title
-                                    {autoFilledFields.clientRole && <span className="ml-2 text-xs text-primary animate-in fade-in">✨ Auto-filled</span>}
-                                </Label>
-                                <Input id="clientRole" value={inputs.clientRole} onChange={e => updateInput('clientRole', e.target.value)} placeholder="e.g., Business Coach, Designer" />
-                            </div>
-
-                            <div>
-                                <Label htmlFor="clientNiche">
-                                    Client Niche
-                                    {autoFilledFields.clientNiche && <span className="ml-2 text-xs text-primary animate-in fade-in">✨ Auto-filled</span>}
-                                </Label>
-                                <Input id="clientNiche" value={inputs.clientNiche} onChange={e => updateInput('clientNiche', e.target.value)} placeholder="e.g., Personal Branding, SaaS Marketing" />
-                            </div>
-
-                            <div>
-                                <Label htmlFor="targetAudience">
-                                    Target Audience
-                                    {autoFilledFields.targetAudience && <span className="ml-2 text-xs text-primary animate-in fade-in">✨ Auto-filled</span>}
-                                </Label>
-                                <Input id="targetAudience" value={inputs.targetAudience} onChange={e => updateInput('targetAudience', e.target.value)} placeholder="e.g., Entrepreneurs, Freelancers" />
-                            </div>
-
-                            <div>
-                                <Label htmlFor="audiencePainPoint">
-                                    Primary Audience Pain Point
-                                    {autoFilledFields.audiencePainPoint && <span className="ml-2 text-xs text-primary animate-in fade-in">✨ Auto-filled</span>}
-                                </Label>
-                                <Textarea id="audiencePainPoint" value={inputs.audiencePainPoint} onChange={e => updateInput('audiencePainPoint', e.target.value)} placeholder="Describe the main challenge your audience faces" rows={3} />
-                            </div>
-
-                            <div>
-                                <Label htmlFor="desiredOutcome">
-                                    Primary Desired Outcome
-                                    {autoFilledFields.desiredOutcome && <span className="ml-2 text-xs text-primary animate-in fade-in">✨ Auto-filled</span>}
-                                </Label>
-                                <Textarea id="desiredOutcome" value={inputs.desiredOutcome} onChange={e => updateInput('desiredOutcome', e.target.value)} placeholder="What result does your audience want?" rows={3} />
-                            </div>
-
-                            <div>
-                                <Label htmlFor="offerCta">
-                                    Offer / CTA
-                                    {autoFilledFields.offerCta && <span className="ml-2 text-xs text-primary animate-in fade-in">✨ Auto-filled</span>}
-                                </Label>
-                                <Input id="offerCta" value={inputs.offerCta} onChange={e => updateInput('offerCta', e.target.value)} placeholder="e.g., DM for details, Link in bio" />
-                            </div>
-
-                            <div>
-                                <Label htmlFor="tone">
-                                    Tone
-                                    {autoFilledFields.tone && <span className="ml-2 text-xs text-primary animate-in fade-in">✨ Auto-filled</span>}
-                                </Label>
-                                <Select value={inputs.tone} onValueChange={value => updateInput('tone', value)}>
-                                    <SelectTrigger>
-                                        <SelectValue placeholder="Select tone" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="Calm">Calm</SelectItem>
-                                        <SelectItem value="Bold">Bold</SelectItem>
-                                        <SelectItem value="Direct">Direct</SelectItem>
-                                        <SelectItem value="Aspirational">Aspirational</SelectItem>
-                                        <SelectItem value="Educational">Educational</SelectItem>
-                                    </SelectContent>
-                                </Select>
-                            </div>
-
-                            {/* Content Pillar Selection */}
-                            <div>
-                                <Label htmlFor="contentPillar">
-                                    Content Pillar
-                                    {autoFilledFields.contentPillar && <span className="ml-2 text-xs text-primary animate-in fade-in">✨ Auto-filled</span>}
-                                </Label>
-                                <Select value={selectedPillar} onValueChange={value => setSelectedPillar(value as any)}>
-                                    <SelectTrigger>
-                                        <SelectValue placeholder="Select content pillar" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        {activeSection === 'looping-video' ? loopingVideoPillars.map(pillar => <SelectItem key={pillar.value} value={pillar.value}>
-                                                    {pillar.label}
-                                                </SelectItem>) : carouselPillars.map(pillar => <SelectItem key={pillar.value} value={pillar.value}>
-                                                    {pillar.label}
-                                                </SelectItem>)}
-                                    </SelectContent>
-                                </Select>
-                            </div>
-
-                            {/* Reference Text (Carousel Only) */}
-                            {activeSection === 'carousel' && <div>
-                                    <Label htmlFor="referenceText">Reference Text (Optional)</Label>
-                                    <Textarea id="referenceText" value={inputs.referenceText} onChange={e => updateInput('referenceText', e.target.value)} placeholder="Paste reference content here (recommended for Case Study and Educational carousels)" rows={5} />
-                                </div>}
-
-                            <Button onClick={handleGenerate} disabled={isLoading} className="w-full" size="lg">
-                                {isLoading ? <>
-                                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                        Generating...
-                                    </> : 'Generate Content'}
-                            </Button>
-                        </div>
-                    </div>
-
-                    {/* Right Side - Response Display */}
-                    <div className="h-fit">
-                        {isLoading ? <div className="glass rounded-2xl p-6 md:p-8 shadow-card flex flex-col items-center justify-center min-h-[400px] text-center">
-                                <Loader2 className="w-12 h-12 text-primary animate-spin mb-4" />
-                                <p className="text-muted-foreground font-medium">Generating your content...</p>
-                                <p className="text-xs text-muted-foreground/70 mt-2">This may take a few moments</p>
-                            </div> : response ? <ContentResponseDisplay response={response} format={activeSection} /> : <div className="glass rounded-2xl p-6 md:p-8 shadow-card flex flex-col items-center justify-center min-h-[400px] text-center">
-                                <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mb-4">
-                                    <FileText className="w-8 h-8 text-muted-foreground" />
-                                </div>
-                                <p className="text-muted-foreground">Result Section</p>
-                                <p className="text-xs text-muted-foreground/70 mt-2">
-                                    Fill the form and click "Generate Content"
-                                </p>
-                            </div>}
-                    </div>
-                </div>
+                <Textarea id="personaInput" value={personaInput} onChange={e => setPersonaInput(e.target.value)} placeholder="Paste persona description, bio, or 'About Me' text here..." className="bg-background/50" rows={3} />
+              </div>
+              <Button onClick={handleSuggestPersona} disabled={isSuggestingPersona || !personaInput.trim()} variant="secondary" className="w-full" size="sm">
+                {isSuggestingPersona ? <>
+                  <Loader2 className="mr-2 h-3 w-3 animate-spin" />
+                  Analyzing Persona...
+                </> : 'Auto-Fill Client Details'}
+              </Button>
             </div>
-        </div>;
+
+            <div className="h-px bg-border/50 my-4" />
+
+            <div>
+              <Label htmlFor="clientName">
+                Client Name
+                {autoFilledFields.clientName && <span className="ml-2 text-xs text-primary animate-in fade-in">✨ Auto-filled</span>}
+              </Label>
+              <Input id="clientName" value={inputs.clientName} onChange={e => updateInput('clientName', e.target.value)} placeholder="Enter client name" />
+            </div>
+
+            <div>
+              <Label htmlFor="clientRole">
+                Client Role / Title
+                {autoFilledFields.clientRole && <span className="ml-2 text-xs text-primary animate-in fade-in">✨ Auto-filled</span>}
+              </Label>
+              <Input id="clientRole" value={inputs.clientRole} onChange={e => updateInput('clientRole', e.target.value)} placeholder="e.g., Business Coach, Designer" />
+            </div>
+
+            <div>
+              <Label htmlFor="clientNiche">
+                Client Niche
+                {autoFilledFields.clientNiche && <span className="ml-2 text-xs text-primary animate-in fade-in">✨ Auto-filled</span>}
+              </Label>
+              <Input id="clientNiche" value={inputs.clientNiche} onChange={e => updateInput('clientNiche', e.target.value)} placeholder="e.g., Personal Branding, SaaS Marketing" />
+            </div>
+
+            <div>
+              <Label htmlFor="targetAudience">
+                Target Audience
+                {autoFilledFields.targetAudience && <span className="ml-2 text-xs text-primary animate-in fade-in">✨ Auto-filled</span>}
+              </Label>
+              <Input id="targetAudience" value={inputs.targetAudience} onChange={e => updateInput('targetAudience', e.target.value)} placeholder="e.g., Entrepreneurs, Freelancers" />
+            </div>
+
+            <div>
+              <Label htmlFor="audiencePainPoint">
+                Primary Audience Pain Point
+                {autoFilledFields.audiencePainPoint && <span className="ml-2 text-xs text-primary animate-in fade-in">✨ Auto-filled</span>}
+              </Label>
+              <Textarea id="audiencePainPoint" value={inputs.audiencePainPoint} onChange={e => updateInput('audiencePainPoint', e.target.value)} placeholder="Describe the main challenge your audience faces" rows={3} />
+            </div>
+
+            <div>
+              <Label htmlFor="desiredOutcome">
+                Primary Desired Outcome
+                {autoFilledFields.desiredOutcome && <span className="ml-2 text-xs text-primary animate-in fade-in">✨ Auto-filled</span>}
+              </Label>
+              <Textarea id="desiredOutcome" value={inputs.desiredOutcome} onChange={e => updateInput('desiredOutcome', e.target.value)} placeholder="What result does your audience want?" rows={3} />
+            </div>
+
+            <div>
+              <Label htmlFor="offerCta">
+                Offer / CTA
+                {autoFilledFields.offerCta && <span className="ml-2 text-xs text-primary animate-in fade-in">✨ Auto-filled</span>}
+              </Label>
+              <div className="space-y-2 mt-1.5">
+                <Select
+                  value={ctaOptions.some(opt => opt.cta === inputs.offerCta) ? inputs.offerCta : ''}
+                  onValueChange={(value) => updateInput('offerCta', value)}
+                  disabled={isLoadingCtas}
+                >
+                  <SelectTrigger className="bg-background/50 border-border">
+                    <SelectValue placeholder={isLoadingCtas ? "Loading CTAs..." : "Select a CTA template"} />
+                  </SelectTrigger>
+                  <SelectContent className="bg-popover border-border z-50">
+                    {ctaOptions.map((option, index) => (
+                      <SelectItem key={index} value={option.cta}>
+                        {option.cta}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Textarea
+                  id="offerCta"
+                  value={inputs.offerCta}
+                  onChange={(e) => updateInput('offerCta', e.target.value)}
+                  placeholder="e.g., DM for details, Link in bio"
+                  rows={2}
+                  className="bg-background/50"
+                />
+                <a
+                  href="https://docs.google.com/spreadsheets/d/1oQUbYqCJ-7A7S33459JycD2h60bb7Z8El1p4cTD5B_s/edit?gid=1974246146#gid=1974246146"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1 text-xs text-primary hover:text-primary/80 transition-colors"
+                >
+                  <ExternalLink className="w-3 h-3" />
+                  Add a new CTA
+                </a>
+              </div>
+            </div>
+
+            <div>
+              <Label htmlFor="tone">
+                Tone
+                {autoFilledFields.tone && <span className="ml-2 text-xs text-primary animate-in fade-in">✨ Auto-filled</span>}
+              </Label>
+              <Select value={inputs.tone} onValueChange={value => updateInput('tone', value)}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select tone" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Calm">Calm</SelectItem>
+                  <SelectItem value="Bold">Bold</SelectItem>
+                  <SelectItem value="Direct">Direct</SelectItem>
+                  <SelectItem value="Aspirational">Aspirational</SelectItem>
+                  <SelectItem value="Educational">Educational</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Content Pillar Selection */}
+            <div>
+              <Label htmlFor="contentPillar">
+                Content Pillar
+                {autoFilledFields.contentPillar && <span className="ml-2 text-xs text-primary animate-in fade-in">✨ Auto-filled</span>}
+              </Label>
+              <Select value={selectedPillar} onValueChange={value => setSelectedPillar(value as any)}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select content pillar" />
+                </SelectTrigger>
+                <SelectContent>
+                  {activeSection === 'looping-video' ? loopingVideoPillars.map(pillar => <SelectItem key={pillar.value} value={pillar.value}>
+                    {pillar.label}
+                  </SelectItem>) : carouselPillars.map(pillar => <SelectItem key={pillar.value} value={pillar.value}>
+                    {pillar.label}
+                  </SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Reference Text (Carousel Only) */}
+            {activeSection === 'carousel' && <div>
+              <Label htmlFor="referenceText">Reference Text (Optional)</Label>
+              <Textarea id="referenceText" value={inputs.referenceText} onChange={e => updateInput('referenceText', e.target.value)} placeholder="Paste reference content here (recommended for Case Study and Educational carousels)" rows={5} />
+            </div>}
+
+            <Button onClick={handleGenerate} disabled={isLoading} className="w-full" size="lg">
+              {isLoading ? <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Generating...
+              </> : 'Generate Content'}
+            </Button>
+          </div>
+        </div>
+
+        {/* Right Side - Response Display */}
+        <div className="h-fit">
+          {isLoading ? <div className="glass rounded-2xl p-6 md:p-8 shadow-card flex flex-col items-center justify-center min-h-[400px] text-center">
+            <Loader2 className="w-12 h-12 text-primary animate-spin mb-4" />
+            <p className="text-muted-foreground font-medium">Generating your content...</p>
+            <p className="text-xs text-muted-foreground/70 mt-2">This may take a few moments</p>
+          </div> : response ? <ContentResponseDisplay response={response} format={activeSection} /> : <div className="glass rounded-2xl p-6 md:p-8 shadow-card flex flex-col items-center justify-center min-h-[400px] text-center">
+            <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mb-4">
+              <FileText className="w-8 h-8 text-muted-foreground" />
+            </div>
+            <p className="text-muted-foreground">Result Section</p>
+            <p className="text-xs text-muted-foreground/70 mt-2">
+              Fill the form and click "Generate Content"
+            </p>
+          </div>}
+        </div>
+      </div>
+    </div>
+  </div>;
 };
 export default ContentCreationSystem;

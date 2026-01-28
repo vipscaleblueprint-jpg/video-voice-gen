@@ -42,6 +42,12 @@ const PROMPTS_API = 'https://n8n.srv1151765.hstgr.cloud/webhook/32117416-351b-47
 const CTA_API = 'https://n8n.srv1151765.hstgr.cloud/webhook/e5260e03-6ded-4448-ab29-52f88af0d35b';
 const GENERATE_PERSONA_API = 'https://n8n.srv1151765.hstgr.cloud/webhook/generate-persona';
 const CAPTION_PARAPHRASE_API = 'https://n8n.srv1151765.hstgr.cloud/webhook/caption-paraphrase-single';
+const CLIENTS_ENDPOINT = 'https://n8n.srv1151765.hstgr.cloud/webhook/client-description';
+
+interface Client {
+  Client: string;
+  Voice: string;
+}
 
 interface VideoUploadFormProps {
   onSubmit: (formData: FormData) => Promise<void>;
@@ -73,6 +79,9 @@ export const VideoUploadForm = ({ onSubmit, onPersonaGenerated, paraphrasedText,
   const [inputMode, setInputMode] = useState<'video' | 'text'>('video');
   const [originalScriptText, setOriginalScriptText] = useState('');
   const [isParaphrasingCaption, setIsParaphrasingCaption] = useState(false);
+  const [clients, setClients] = useState<Client[]>([]);
+  const [selectedClient, setSelectedClient] = useState<string>('');
+  const [loadingClients, setLoadingClients] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
 
@@ -111,6 +120,32 @@ export const VideoUploadForm = ({ onSubmit, onPersonaGenerated, paraphrasedText,
     };
     fetchCtaOptions();
   }, []);
+
+  // Fetch clients from API
+  useEffect(() => {
+    const fetchClients = async () => {
+      setLoadingClients(true);
+      try {
+        const res = await fetch(CLIENTS_ENDPOINT);
+        if (!res.ok) throw new Error('Failed to fetch clients');
+        const data = await res.json();
+        setClients(data);
+      } catch (error) {
+        console.error('Failed to fetch clients:', error);
+      } finally {
+        setLoadingClients(false);
+      }
+    };
+    fetchClients();
+  }, []);
+
+  const handleClientChange = (clientId: string) => {
+    setSelectedClient(clientId);
+    const clientData = clients.find(c => c.Client === clientId);
+    if (clientData) {
+      setPersonaInput(clientData.Voice);
+    }
+  };
 
   // Create video preview URL when file changes
   useEffect(() => {
@@ -615,18 +650,38 @@ export const VideoUploadForm = ({ onSubmit, onPersonaGenerated, paraphrasedText,
       </Button>
 
       {/* Persona Input */}
-      <div className="space-y-2">
-        <Label htmlFor="personaInput" className="text-muted-foreground">
-          Persona Input <span className="text-xs text-muted-foreground/70">(Who you help & Outcome)</span>
-        </Label>
-        <Textarea
-          id="personaInput"
-          value={personaInput}
-          onChange={(e) => setPersonaInput(e.target.value)}
-          placeholder="e.g. I am Jenesia Red, a fractional CMO who helps creators with AI content and funnels."
-          rows={3}
-          className="bg-secondary border-border focus:border-primary focus:ring-primary/20 resize-y"
-        />
+      <div className="space-y-4 pt-4 border-t border-border">
+        <div className="space-y-2">
+          <Label htmlFor="clientSelect" className="text-primary font-semibold flex items-center gap-2">
+            ✨ Client Profile
+          </Label>
+          <Select value={selectedClient} onValueChange={handleClientChange}>
+            <SelectTrigger id="clientSelect" className="bg-secondary border-border focus:border-primary focus:ring-primary/20">
+              <SelectValue placeholder={loadingClients ? "Loading clients..." : "Select a client profile"} />
+            </SelectTrigger>
+            <SelectContent className="bg-popover border-border z-50">
+              {clients.map(client => (
+                <SelectItem key={client.Client} value={client.Client}>
+                  {client.Client}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="personaInput" className="text-muted-foreground">
+            Persona Input <span className="text-xs text-muted-foreground/70">(Who you help & Outcome)</span>
+          </Label>
+          <Textarea
+            id="personaInput"
+            value={personaInput}
+            onChange={(e) => setPersonaInput(e.target.value)}
+            placeholder="e.g. I am Jenesia Red, a fractional CMO who helps creators with AI content and funnels."
+            rows={3}
+            className="bg-secondary border-border focus:border-primary focus:ring-primary/20 resize-y"
+          />
+        </div>
         <Button
           type="button"
           onClick={handleGeneratePersona}
