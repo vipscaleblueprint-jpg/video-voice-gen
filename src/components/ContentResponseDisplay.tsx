@@ -22,6 +22,8 @@ interface ContentResponse {
             line2?: string;
             line3?: string;
             line4?: string;
+            line5?: string;
+            line6?: string;
             cta?: string;
             [key: string]: string | undefined;
         };
@@ -86,13 +88,16 @@ export const ContentResponseDisplay = ({ response, format }: ContentResponseDisp
             if (data.output && typeof data.output !== 'string') {
                 if (data.output.textOverlay) {
                     const to = data.output.textOverlay;
-                    // If it has line1, line2, line3, line4 structure
-                    if (to.line1 || to.line2 || to.line3 || to.line4) {
-                        overlayLines = [to.line1, to.line2, to.line3, to.line4].filter(Boolean) as string[];
+                    // If it has line1...line6 structure
+                    if (to.line1 || to.line2 || to.line3 || to.line4 || to.line5 || to.line6) {
+                        overlayLines = [to.line1, to.line2, to.line3, to.line4, to.line5, to.line6].filter(Boolean) as string[];
                         cta = to.cta || '';
                     } else {
-                        // Fallback to original Record behavior
-                        overlayLines = Object.values(to).filter(Boolean) as string[];
+                        // Fallback: exclude 'cta' if it exists in the values
+                        overlayLines = Object.entries(to)
+                            .filter(([key, value]) => key !== 'cta' && Boolean(value))
+                            .map(([_, value]) => value as string);
+                        cta = to.cta || '';
                     }
                 }
 
@@ -106,10 +111,12 @@ export const ContentResponseDisplay = ({ response, format }: ContentResponseDisp
                     overlayLines = data.textOverlay;
                 } else if (typeof data.textOverlay === 'object' && data.textOverlay !== null) {
                     const to = data.textOverlay as any;
-                    overlayLines = [to.line1, to.line2, to.line3, to.line4].filter(Boolean);
+                    overlayLines = [to.line1, to.line2, to.line3, to.line4, to.line5, to.line6].filter(Boolean);
                     cta = to.cta || '';
                     if (overlayLines.length === 0) {
-                        overlayLines = Object.values(to).filter(Boolean) as string[];
+                        overlayLines = Object.entries(to)
+                            .filter(([key, value]) => key !== 'cta' && Boolean(value))
+                            .map(([_, value]) => value as string);
                     }
                 }
 

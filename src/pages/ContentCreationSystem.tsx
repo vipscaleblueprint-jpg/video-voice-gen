@@ -35,6 +35,7 @@ interface UniversalInputs {
 const ContentCreationSystem = () => {
   const [activeSection, setActiveSection] = useState<'looping-video' | 'carousel'>('looping-video');
   const [selectedPillar, setSelectedPillar] = useState<LoopingVideoPillar | CarouselPillar>('bts-pain-points');
+  const [tipType, setTipType] = useState<string>('Default');
   const [isLoading, setIsLoading] = useState(false);
   const [response, setResponse] = useState<any | null>(null);
 
@@ -246,6 +247,7 @@ const ContentCreationSystem = () => {
       const payload = {
         ...inputs,
         contentPillar: selectedPillar,
+        tipType: selectedPillar === 'quick-tips' ? tipType : undefined,
         format: activeSection // Will be either 'looping-video' or 'carousel'
       };
       const res = await fetch(API_ENDPOINT, {
@@ -529,6 +531,25 @@ const ContentCreationSystem = () => {
                 </SelectContent>
               </Select>
             </div>
+
+            {/* Tip Type Dropdown - Only shows when Quick Tips is selected */}
+            {selectedPillar === 'quick-tips' && (
+              <div className="animate-in fade-in slide-in-from-top-2 duration-300">
+                <Label htmlFor="tipType">Tip Type</Label>
+                <Select value={tipType} onValueChange={setTipType}>
+                  <SelectTrigger className="bg-background/50 border-border">
+                    <SelectValue placeholder="Select tip type" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-popover border-border z-50">
+                    <SelectItem value="Default">Default</SelectItem>
+                    <SelectItem value="Audit Tip">Audit Tip</SelectItem>
+                    <SelectItem value="Shortcut Tip">Shortcut Tip</SelectItem>
+                    <SelectItem value="Rule Tip">Rule Tip</SelectItem>
+                    <SelectItem value="Mistake Tip">Mistake Tip</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
 
             {/* Reference Text (Carousel Only) */}
             {activeSection === 'carousel' && <div>
