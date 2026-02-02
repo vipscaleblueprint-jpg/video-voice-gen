@@ -15,6 +15,7 @@ import ThumbnailHookGenerator from "./pages/ThumbnailHookGenerator";
 import AdsCopyGenerator from "./pages/AdsCopyGenerator";
 import VPSGenerator from "./pages/VPSGenerator";
 import ContentCreationSystem from "./pages/ContentCreationSystem";
+import PersonaGenerator from "./pages/PersonaGenerator";
 import NotFound from "./pages/NotFound";
 
 import ClientOnboarding from "./pages/ClientOnboarding";
@@ -39,6 +40,7 @@ const App = () => (
           <Route path="/ads-copy" element={<AdsCopyGenerator />} />
           <Route path="/vps-generator" element={<VPSGenerator />} />
           <Route path="/content-creation" element={<ContentCreationSystem />} />
+          <Route path="/persona-generator" element={<PersonaGenerator />} />
           <Route path="/client-onboarding" element={<ClientOnboarding />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
