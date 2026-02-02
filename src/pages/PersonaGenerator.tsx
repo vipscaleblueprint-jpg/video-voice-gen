@@ -443,7 +443,7 @@ const PersonaGenerator = () => {
                         <Loader2 className="w-12 h-12 text-primary animate-spin mb-4" />
                         <p className="text-muted-foreground font-medium">Generating your persona...</p>
                         <p className="text-xs text-muted-foreground/70 mt-2">This may take a few moments</p>
-                    </div> : response ? <PersonaResponseDisplay response={response} /> : <div className="glass rounded-2xl p-6 md:p-8 shadow-card flex flex-col items-center justify-center min-h-[400px] text-center">
+                    </div> : response ? <PersonaResponseDisplay response={response} clientName={inputs.clientName} /> : <div className="glass rounded-2xl p-6 md:p-8 shadow-card flex flex-col items-center justify-center min-h-[400px] text-center">
                         <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mb-4">
                             <Users className="w-8 h-8 text-muted-foreground" />
                         </div>

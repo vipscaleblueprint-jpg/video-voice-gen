@@ -42,11 +42,12 @@ const PROMPTS_API = 'https://n8n.srv1151765.hstgr.cloud/webhook/32117416-351b-47
 const CTA_API = 'https://n8n.srv1151765.hstgr.cloud/webhook/e5260e03-6ded-4448-ab29-52f88af0d35b';
 const GENERATE_PERSONA_API = 'https://n8n.srv1151765.hstgr.cloud/webhook/generate-persona';
 const CAPTION_PARAPHRASE_API = 'https://n8n.srv1151765.hstgr.cloud/webhook/caption-paraphrase-single';
-const CLIENTS_ENDPOINT = 'https://n8n.srv1151765.hstgr.cloud/webhook/client-description';
+const CLIENTS_ENDPOINT = 'https://n8n.srv1151765.hstgr.cloud/webhook/client-persona';
 
 interface Client {
   Client: string;
-  Voice: string;
+  Persona: string;
+  Voice?: string;
 }
 
 interface VideoUploadFormProps {
@@ -126,7 +127,7 @@ export const VideoUploadForm = ({ onSubmit, onPersonaGenerated, paraphrasedText,
     const fetchClients = async () => {
       setLoadingClients(true);
       try {
-        const res = await fetch(CLIENTS_ENDPOINT);
+        const res = await fetch(CLIENTS_ENDPOINT, { method: 'POST' });
         if (!res.ok) throw new Error('Failed to fetch clients');
         const data = await res.json();
         setClients(data);
@@ -143,7 +144,7 @@ export const VideoUploadForm = ({ onSubmit, onPersonaGenerated, paraphrasedText,
     setSelectedClient(clientId);
     const clientData = clients.find(c => c.Client === clientId);
     if (clientData) {
-      setPersonaInput(clientData.Voice);
+      setPersonaInput(clientData.Persona || clientData.Voice || '');
     }
   };
 

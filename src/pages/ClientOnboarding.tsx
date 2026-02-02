@@ -264,136 +264,136 @@ const ClientOnboarding = () => {
     }
   };
   return <div className="min-h-screen bg-background relative overflow-hidden lg:pl-64">
-            {/* Background Effects */}
-            <div className="absolute inset-0 overflow-hidden pointer-events-none">
-                <div className="absolute top-0 left-1/4 w-96 h-96 bg-primary/5 rounded-full blur-3xl" />
-                <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-accent/5 rounded-full blur-3xl" />
+    {/* Background Effects */}
+    <div className="absolute inset-0 overflow-hidden pointer-events-none">
+      <div className="absolute top-0 left-1/4 w-96 h-96 bg-primary/5 rounded-full blur-3xl" />
+      <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-accent/5 rounded-full blur-3xl" />
+    </div>
+
+    <div className="relative z-10 container max-w-7xl mx-auto px-4 py-12">
+      {/* Header */}
+      <div className="text-center mb-10 py-[50px]">
+        <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-primary/20 mb-4 glow-primary">
+          <UserPlus className="w-8 h-8 text-primary" />
+        </div>
+        <h1 className="text-3xl md:text-4xl font-bold text-foreground mb-2">
+          Client <span className="gradient-text">Onboarding</span>
+        </h1>
+        <p className="text-muted-foreground max-w-md mx-auto">
+          Generate high-retention Reel scripts from client bios and proven templates.
+        </p>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        {/* Input Form */}
+        <div className="glass rounded-2xl p-6 md:p-8 shadow-card h-fit">
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <div className="space-y-4">
+              <div className="p-4 rounded-xl bg-primary/5 border border-primary/10 space-y-3">
+                <Label htmlFor="clientProfile" className="text-primary font-semibold flex items-center gap-2">
+                  ✨ Client Profile Selector
+                </Label>
+                <Select value={selectedClient} onValueChange={handleClientChange}>
+                  <SelectTrigger className="bg-background/50 border-primary/20">
+                    <SelectValue placeholder={loadingClients ? "Loading clients..." : "Select a client profile"} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {clients.map(client => <SelectItem key={client.Client} value={client.Client}>
+                      {client.Client}
+                    </SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="clientBio">Client Bio</Label>
+                <Textarea id="clientBio" value={clientBio} onChange={e => setClientBio(e.target.value)} placeholder="Paste client bio here or select a profile above..." className="min-h-[200px]" />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="clientAdditionalInfo">Client Additional Info</Label>
+                <Textarea id="clientAdditionalInfo" value={clientAdditionalInfo} onChange={e => setClientAdditionalInfo(e.target.value)} placeholder="Add any extra details, specific requirements, or contexts..." className="min-h-[120px]" />
+              </div>
             </div>
 
-            <div className="relative z-10 container max-w-7xl mx-auto px-4 py-12">
-                {/* Header */}
-                <div className="text-center mb-10 py-[50px]">
-                    <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-primary/20 mb-4 glow-primary">
-                        <UserPlus className="w-8 h-8 text-primary" />
-                    </div>
-                    <h1 className="text-3xl md:text-4xl font-bold text-foreground mb-2">
-                        Client <span className="gradient-text">Onboarding</span>
-                    </h1>
-                    <p className="text-muted-foreground max-w-md mx-auto">
-                        Generate high-retention Reel scripts from client bios and proven templates.
-                    </p>
-                </div>
+            <div className="space-y-2">
+              <Label htmlFor="template">Template Structure</Label>
+              <Select value={selectedTemplate} onValueChange={setSelectedTemplate}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select a template structure" />
+                </SelectTrigger>
+                <SelectContent>
+                  {TEMPLATES.map(template => <SelectItem key={template.label} value={template.label}>
+                    {template.label}
+                  </SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
 
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                    {/* Input Form */}
-                    <div className="glass rounded-2xl p-6 md:p-8 shadow-card h-fit">
-                        <form onSubmit={handleSubmit} className="space-y-6">
-                            <div className="space-y-4">
-                                <div className="p-4 rounded-xl bg-primary/5 border border-primary/10 space-y-3">
-                                    <Label htmlFor="clientProfile" className="text-primary font-semibold flex items-center gap-2">
-                                        ✨ Client Profile Selector
-                                    </Label>
-                                    <Select value={selectedClient} onValueChange={handleClientChange}>
-                                        <SelectTrigger className="bg-background/50 border-primary/20">
-                                            <SelectValue placeholder={loadingClients ? "Loading clients..." : "Select a client profile"} />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            {clients.map(client => <SelectItem key={client.Client} value={client.Client}>
-                                                    {client.Client}
-                                                </SelectItem>)}
-                                        </SelectContent>
-                                    </Select>
-                                </div>
+            {/* CTA Dropdown */}
+            <div className="space-y-3">
+              <Label htmlFor="cta" className="text-muted-foreground">CTA (Call to Action)</Label>
+              <Select value={ctaOptions.find(opt => opt.cta === selectedCta)?.cta || ''} onValueChange={setSelectedCta}>
+                <SelectTrigger className="bg-secondary border-border focus:border-primary focus:ring-primary/20">
+                  <SelectValue placeholder={ctaLoading ? "Loading CTA options..." : "Select a CTA template"} />
+                </SelectTrigger>
+                <SelectContent className="bg-popover border-border z-50">
+                  {ctaOptions.length > 0 ? ctaOptions.map((option, index) => <SelectItem key={index} value={option.cta}>
+                    {option.cta}
+                  </SelectItem>) : <SelectItem value="_empty" disabled>
+                    No CTA options available
+                  </SelectItem>}
+                </SelectContent>
+              </Select>
 
-                                <div className="space-y-2">
-                                    <Label htmlFor="clientBio">Client Bio</Label>
-                                    <Textarea id="clientBio" value={clientBio} onChange={e => setClientBio(e.target.value)} placeholder="Paste client bio here or select a profile above..." className="min-h-[200px]" />
-                                </div>
+              {/* Editable CTA Textarea */}
+              <Textarea id="cta" value={selectedCta} onChange={e => setSelectedCta(e.target.value)} placeholder="Select a template above or type your own CTA..." rows={2} className="bg-secondary border-border focus:border-primary focus:ring-primary/20 resize-y" />
+            </div>
 
-                                <div className="space-y-2">
-                                    <Label htmlFor="clientAdditionalInfo">Client Additional Info</Label>
-                                    <Textarea id="clientAdditionalInfo" value={clientAdditionalInfo} onChange={e => setClientAdditionalInfo(e.target.value)} placeholder="Add any extra details, specific requirements, or contexts..." className="min-h-[120px]" />
-                                </div>
-                            </div>
+            <Button type="submit" className="w-full h-12 text-base font-semibold bg-primary text-primary-foreground hover:bg-primary/90 glow-primary transition-all" disabled={isLoading}>
+              {isLoading ? <>
+                <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                Generating...
+              </> : <>
+                <Sparkles className="w-5 h-5 mr-2" />
+                Generate Internal Logic
+              </>}
+            </Button>
+          </form>
+        </div>
 
-                            <div className="space-y-2">
-                                <Label htmlFor="template">Template Structure</Label>
-                                <Select value={selectedTemplate} onValueChange={setSelectedTemplate}>
-                                    <SelectTrigger>
-                                        <SelectValue placeholder="Select a template structure" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        {TEMPLATES.map(template => <SelectItem key={template.label} value={template.label}>
-                                                {template.label}
-                                            </SelectItem>)}
-                                    </SelectContent>
-                                </Select>
-                            </div>
-
-                            {/* CTA Dropdown */}
-                            <div className="space-y-3">
-                                <Label htmlFor="cta" className="text-muted-foreground">CTA (Call to Action)</Label>
-                                <Select value={ctaOptions.find(opt => opt.cta === selectedCta)?.cta || ''} onValueChange={setSelectedCta}>
-                                    <SelectTrigger className="bg-secondary border-border focus:border-primary focus:ring-primary/20">
-                                        <SelectValue placeholder={ctaLoading ? "Loading CTA options..." : "Select a CTA template"} />
-                                    </SelectTrigger>
-                                    <SelectContent className="bg-popover border-border z-50">
-                                        {ctaOptions.length > 0 ? ctaOptions.map((option, index) => <SelectItem key={index} value={option.cta}>
-                                                    {option.cta}
-                                                </SelectItem>) : <SelectItem value="_empty" disabled>
-                                                No CTA options available
-                                            </SelectItem>}
-                                    </SelectContent>
-                                </Select>
-
-                                {/* Editable CTA Textarea */}
-                                <Textarea id="cta" value={selectedCta} onChange={e => setSelectedCta(e.target.value)} placeholder="Select a template above or type your own CTA..." rows={2} className="bg-secondary border-border focus:border-primary focus:ring-primary/20 resize-y" />
-                            </div>
-
-                            <Button type="submit" className="w-full h-12 text-base font-semibold bg-primary text-primary-foreground hover:bg-primary/90 glow-primary transition-all" disabled={isLoading}>
-                                {isLoading ? <>
-                                        <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-                                        Generating...
-                                    </> : <>
-                                        <Sparkles className="w-5 h-5 mr-2" />
-                                        Generate Internal Logic
-                                    </>}
-                            </Button>
-                        </form>
-                    </div>
-
-                    {/* Output Display */}
-                    <div className="h-fit">
-                        {isLoading ? <div className="glass rounded-2xl p-6 md:p-8 shadow-card flex flex-col items-center justify-center min-h-[300px] text-center">
-                                <Loader2 className="w-12 h-12 text-primary animate-spin mb-4" />
-                                <p className="text-muted-foreground font-medium">Generating script...</p>
-                            </div> : generatedScript ? <div className="space-y-6">
-                                <ResponseDisplay response={generatedScript} paraphrasedLabel="Internal Logic" secondaryAction={{
+        {/* Output Display */}
+        <div className="h-fit">
+          {isLoading ? <div className="glass rounded-2xl p-6 md:p-8 shadow-card flex flex-col items-center justify-center min-h-[300px] text-center">
+            <Loader2 className="w-12 h-12 text-primary animate-spin mb-4" />
+            <p className="text-muted-foreground font-medium">Generating script...</p>
+          </div> : generatedScript ? <div className="space-y-6">
+            <ResponseDisplay response={generatedScript} paraphrasedLabel="Internal Logic" secondaryAction={{
               label: "Generate Script",
               onClick: handleGenerateScript,
               isLoading: isGeneratingScript
             }} />
 
-                                {isGeneratingScript && <div className="glass rounded-2xl p-6 md:p-8 shadow-card flex flex-col items-center justify-center min-h-[200px] text-center">
-                                        <Loader2 className="w-10 h-10 text-primary animate-spin mb-4" />
-                                        <p className="text-muted-foreground font-medium">Drafting final script...</p>
-                                    </div>}
+            {isGeneratingScript && <div className="glass rounded-2xl p-6 md:p-8 shadow-card flex flex-col items-center justify-center min-h-[200px] text-center">
+              <Loader2 className="w-10 h-10 text-primary animate-spin mb-4" />
+              <p className="text-muted-foreground font-medium">Drafting final script...</p>
+            </div>}
 
-                                {finalScript && <ResponseDisplay response={{
+            {finalScript && <ResponseDisplay response={{
               paraphrased: finalScript,
               preserveWhitespace: true
             }} paraphrasedLabel="Final Script" />}
-                            </div> : <div className="glass rounded-2xl p-6 md:p-8 shadow-card flex flex-col items-center justify-center min-h-[300px] text-center">
-                                <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mb-4">
-                                    <UserPlus className="w-8 h-8 text-muted-foreground" />
-                                </div>
-                                <p className="text-muted-foreground">
-                                    Generated script will appear here
-                                </p>
-                            </div>}
-                    </div>
-                </div>
+          </div> : <div className="glass rounded-2xl p-6 md:p-8 shadow-card flex flex-col items-center justify-center min-h-[300px] text-center">
+            <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mb-4">
+              <UserPlus className="w-8 h-8 text-muted-foreground" />
             </div>
-        </div>;
+            <p className="text-muted-foreground">
+              Generated script will appear here
+            </p>
+          </div>}
+        </div>
+      </div>
+    </div>
+  </div>;
 };
 export default ClientOnboarding;

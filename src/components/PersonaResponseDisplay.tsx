@@ -1,6 +1,7 @@
 import { useState, useMemo } from 'react';
-import { Copy, Check, User } from 'lucide-react';
+import { Copy, Check, User, Loader2, Save, Edit3, ExternalLink } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Textarea } from '@/components/ui/textarea';
 import { toast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 
@@ -19,13 +20,18 @@ interface PersonaResponse {
 
 interface PersonaResponseDisplayProps {
     response: PersonaResponse | PersonaResponse[];
+    clientName: string;
 }
 
-const CopyableItem = ({ text, label, className }: { text: string; label?: string; className?: string }) => {
+const VariationCard = ({ text, label, clientName, className }: { text: string; label?: string; clientName: string; className?: string }) => {
     const [copied, setCopied] = useState(false);
+    const [isSaving, setIsSaving] = useState(false);
+    const [isSaved, setIsSaved] = useState(false);
+    const [isEditing, setIsEditing] = useState(false);
+    const [editedText, setEditedText] = useState(text);
 
     const handleCopy = () => {
-        navigator.clipboard.writeText(text);
+        navigator.clipboard.writeText(editedText);
         setCopied(true);
         toast({
             title: 'Copied!',
@@ -35,26 +41,121 @@ const CopyableItem = ({ text, label, className }: { text: string; label?: string
         setTimeout(() => setCopied(false), 2000);
     };
 
+    const handleSaveToSheet = async () => {
+        setIsSaving(true);
+        try {
+            const API_ENDPOINT = 'https://n8n.srv1151765.hstgr.cloud/webhook/update-persona-sheet';
+            const res = await fetch(API_ENDPOINT, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    clientName: clientName,
+                    persona: editedText,
+                    variation: label
+                })
+            });
+
+            if (!res.ok) throw new Error('Failed to save to sheet');
+
+            setIsSaved(true);
+            toast({
+                title: 'Success',
+                description: 'Persona saved to sheet successfully!',
+            });
+        } catch (error) {
+            console.error('Save error:', error);
+            toast({
+                title: 'Error',
+                description: 'Failed to save to sheet. Please try again.',
+                variant: 'destructive'
+            });
+        } finally {
+            setIsSaving(false);
+        }
+    };
+
     return (
-        <div className={cn("group flex items-start justify-between gap-3 p-3 rounded-xl bg-white/5 border border-white/10 hover:border-primary/50 transition-all", className)}>
-            <div className="flex-1">
-                {label && <p className="text-[10px] uppercase tracking-wider text-primary font-bold mb-1">{label}</p>}
-                <p className="text-foreground leading-relaxed">{text}</p>
+        <div className={cn("group flex flex-col gap-3 p-4 rounded-xl bg-white/5 border border-white/10 hover:border-primary/50 transition-all", className, isEditing && "border-primary/50 bg-primary/5")}>
+            <div className="flex items-start justify-between gap-3">
+                <div className="flex-1">
+                    {label && <p className="text-[10px] uppercase tracking-wider text-primary font-bold mb-1">{label}</p>}
+                    {isEditing ? (
+                        <Textarea
+                            value={editedText}
+                            onChange={(e) => setEditedText(e.target.value)}
+                            className="bg-background/50 border-primary/20 min-h-[100px] text-sm leading-relaxed"
+                            autoFocus
+                        />
+                    ) : (
+                        <p className="text-foreground leading-relaxed">{editedText}</p>
+                    )}
+                </div>
+                <div className="flex flex-col gap-1">
+                    <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => setIsEditing(!isEditing)}
+                        className={cn(
+                            "opacity-0 group-hover:opacity-100 transition-opacity h-8 w-8 text-muted-foreground hover:text-primary shrink-0",
+                            isEditing && "opacity-100 text-primary"
+                        )}
+                        title={isEditing ? "Finish editing" : "Edit variation"}
+                    >
+                        <Edit3 className="w-4 h-4" />
+                    </Button>
+                    <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={handleCopy}
+                        className="opacity-0 group-hover:opacity-100 transition-opacity h-8 w-8 text-muted-foreground hover:text-primary shrink-0"
+                        title="Copy item"
+                    >
+                        {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+                    </Button>
+                </div>
             </div>
-            <Button
-                variant="ghost"
-                size="icon"
-                onClick={handleCopy}
-                className="opacity-0 group-hover:opacity-100 transition-opacity h-8 w-8 text-muted-foreground hover:text-primary shrink-0"
-                title="Copy item"
-            >
-                {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
-            </Button>
+            <div className="flex justify-end pt-3 border-t border-white/5">
+                <Button
+                    variant="default"
+                    size="sm"
+                    onClick={handleSaveToSheet}
+                    disabled={isSaving}
+                    className="text-xs h-9 px-4 gap-2 shadow-glow hover:scale-105 transition-all duration-300 font-bold bg-primary text-primary-foreground"
+                >
+                    {isSaving ? (
+                        <>
+                            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                            Saving...
+                        </>
+                    ) : (
+                        <>
+                            <Save className="h-3.5 w-3.5" />
+                            Save
+                        </>
+                    )}
+                </Button>
+            </div>
+
+            {isSaved && (
+                <div className="flex justify-end mt-1 animate-in fade-in slide-in-from-top-1 duration-300">
+                    <a
+                        href="https://docs.google.com/spreadsheets/d/1oQUbYqCJ-7A7S33459JycD2h60bb7Z8El1p4cTD5B_s/edit?gid=851312623#gid=851312623"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-[10px] text-primary hover:underline flex items-center gap-1 font-medium"
+                    >
+                        <ExternalLink className="w-2.5 h-2.5" />
+                        Click here to see
+                    </a>
+                </div>
+            )}
         </div>
     );
 };
 
-export const PersonaResponseDisplay = ({ response }: PersonaResponseDisplayProps) => {
+export const PersonaResponseDisplay = ({ response, clientName }: PersonaResponseDisplayProps) => {
     const [copied, setCopied] = useState(false);
 
     const personaLines = useMemo(() => {
@@ -130,10 +231,11 @@ export const PersonaResponseDisplay = ({ response }: PersonaResponseDisplayProps
 
             <div className="space-y-4">
                 {personaLines.map((line) => (
-                    <CopyableItem
+                    <VariationCard
                         key={line.id}
                         text={line.text}
                         label={line.label}
+                        clientName={clientName}
                     />
                 ))}
             </div>
