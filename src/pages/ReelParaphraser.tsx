@@ -3,7 +3,7 @@ import { VideoUploadForm } from '@/components/VideoUploadForm';
 import { ResponseDisplay } from '@/components/ResponseDisplay';
 import { Video, Loader2 } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
-const API_ENDPOINT = 'https://n8n.srv1151765.hstgr.cloud/webhook/paraphrase-reel';
+const API_ENDPOINT = 'https://n8n.heysnaply.com/webhook/paraphrase-reel';
 const ReelParaphraser = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [paraphrasedText, setParaphrasedText] = useState('');

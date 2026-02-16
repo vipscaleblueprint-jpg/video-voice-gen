@@ -3,7 +3,7 @@ import { AdsCopyForm, type AdsCopyFormPayload } from '@/components/AdsCopyForm';
 import { AdsResponseDisplay } from '@/components/AdsResponseDisplay';
 import { Megaphone, Loader2 } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
-const API_ENDPOINT = 'https://n8n.srv1151765.hstgr.cloud/webhook/generate-ads-copies';
+const API_ENDPOINT = 'https://n8n.heysnaply.com/webhook/generate-ads-copies';
 const AdsCopyGenerator = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [response, setResponse] = useState<any | null>(null);

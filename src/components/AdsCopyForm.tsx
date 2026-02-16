@@ -14,7 +14,7 @@ import {
 } from "@/components/ui/select";
 import { toast } from '@/hooks/use-toast';
 
-const CLIENTS_ENDPOINT = 'https://n8n.srv1151765.hstgr.cloud/webhook/client-description';
+const CLIENTS_ENDPOINT = 'https://n8n.heysnaply.com/webhook/client-description';
 
 interface Client {
     Client: string;

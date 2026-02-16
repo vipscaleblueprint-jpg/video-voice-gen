@@ -7,11 +7,11 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-const CLIENTS_ENDPOINT = 'https://n8n.srv1151765.hstgr.cloud/webhook/client-description';
+const CLIENTS_ENDPOINT = 'https://n8n.heysnaply.com/webhook/client-description';
 interface CTAOption {
   cta: string;
 }
-const CTA_ENDPOINT = 'https://n8n.srv1151765.hstgr.cloud/webhook/e5260e03-6ded-4448-ab29-52f88af0d35b';
+const CTA_ENDPOINT = 'https://n8n.heysnaply.com/webhook/e5260e03-6ded-4448-ab29-52f88af0d35b';
 interface Client {
   Client: string;
   Voice: string;
@@ -110,7 +110,7 @@ const ContentCreationSystem = () => {
   const handleSuggestPersona = async () => {
     setIsSuggestingPersona(true);
     try {
-      const API_ENDPOINT = 'https://n8n.srv1151765.hstgr.cloud/webhook/suggest-persona';
+      const API_ENDPOINT = 'https://n8n.heysnaply.com/webhook/suggest-persona';
       const res = await fetch(API_ENDPOINT, {
         method: 'POST',
         headers: {
@@ -243,7 +243,7 @@ const ContentCreationSystem = () => {
     setIsLoading(true);
     setResponse(null);
     try {
-      const API_ENDPOINT = 'https://n8n.srv1151765.hstgr.cloud/webhook/content-gen';
+      const API_ENDPOINT = 'https://n8n.heysnaply.com/webhook/content-gen';
       const payload = {
         ...inputs,
         contentPillar: selectedPillar,

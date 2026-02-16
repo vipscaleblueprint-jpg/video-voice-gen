@@ -6,9 +6,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Loader2, UserPlus, Sparkles } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { ResponseDisplay } from '@/components/ResponseDisplay';
-const API_ENDPOINT = 'https://n8n.srv1151765.hstgr.cloud/webhook/client-onboarding';
-const CLIENTS_ENDPOINT = 'https://n8n.srv1151765.hstgr.cloud/webhook/client-description';
-const SCRIPT_API_ENDPOINT = 'https://n8n.srv1151765.hstgr.cloud/webhook/client-onboarding-script';
+const API_ENDPOINT = 'https://n8n.heysnaply.com/webhook/client-onboarding';
+const CLIENTS_ENDPOINT = 'https://n8n.heysnaply.com/webhook/client-description';
+const SCRIPT_API_ENDPOINT = 'https://n8n.heysnaply.com/webhook/client-onboarding-script';
 interface Client {
   Client: string;
   Voice: string;
@@ -35,7 +35,7 @@ const TEMPLATES = [{
   label: "Educational: About / Mission",
   value: "Educational: About / Mission"
 }];
-const CTA_API = 'https://n8n.srv1151765.hstgr.cloud/webhook/e5260e03-6ded-4448-ab29-52f88af0d35b';
+const CTA_API = 'https://n8n.heysnaply.com/webhook/e5260e03-6ded-4448-ab29-52f88af0d35b';
 interface CtaOption {
   cta: string;
 }

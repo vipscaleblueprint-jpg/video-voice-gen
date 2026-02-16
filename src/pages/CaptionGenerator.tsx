@@ -4,7 +4,7 @@ import { CaptionResponseDisplay } from '@/components/CaptionResponseDisplay';
 import { MessageSquare, Loader2 } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { SocialCaptions } from '@/types';
-const API_ENDPOINT = 'https://n8n.srv1151765.hstgr.cloud/webhook/caption-generator';
+const API_ENDPOINT = 'https://n8n.heysnaply.com/webhook/caption-generator';
 const CaptionGenerator = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [response, setResponse] = useState<SocialCaptions | null>(null);

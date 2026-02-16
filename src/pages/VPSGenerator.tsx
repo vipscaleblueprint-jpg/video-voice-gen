@@ -6,7 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
 import { toast } from "sonner";
-const VPS_API_URL = 'https://n8n.srv1151765.hstgr.cloud/webhook/generate-vps';
+const VPS_API_URL = 'https://n8n.heysnaply.com/webhook/generate-vps';
 const VPSGenerator = () => {
   const [inputText, setInputText] = useState('');
   const [isLoading, setIsLoading] = useState(false);
