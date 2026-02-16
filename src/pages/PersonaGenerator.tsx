@@ -8,7 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
-const CLIENTS_ENDPOINT = 'https://n8n.srv1151765.hstgr.cloud/webhook/client-description';
+const CLIENTS_ENDPOINT = 'https://n8n.heysnaply.com/webhook/client-description';
 
 interface Client {
     Client: string;
@@ -102,7 +102,7 @@ const PersonaGenerator = () => {
     const handleSuggestPersona = async () => {
         setIsSuggestingPersona(true);
         try {
-            const API_ENDPOINT = 'https://n8n.srv1151765.hstgr.cloud/webhook/suggest-persona';
+            const API_ENDPOINT = 'https://n8n.heysnaply.com/webhook/suggest-persona';
             const res = await fetch(API_ENDPOINT, {
                 method: 'POST',
                 headers: {
@@ -202,7 +202,7 @@ const PersonaGenerator = () => {
         setIsLoading(true);
         setResponse(null);
         try {
-            const API_ENDPOINT = 'https://n8n.srv1151765.hstgr.cloud/webhook/persona-generator';
+            const API_ENDPOINT = 'https://n8n.heysnaply.com/webhook/persona-generator';
             const payload = {
                 ...inputs,
                 tipType: inputs.contentPillar === 'quick-tips' ? tipType : undefined,
