@@ -11,8 +11,8 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
-const CTA_ENDPOINT = 'https://n8n.srv1151765.hstgr.cloud/webhook/e5260e03-6ded-4448-ab29-52f88af0d35b';
-const PROMPTS_API = 'https://n8n.srv1151765.hstgr.cloud/webhook/32117416-351b-4703-8ffb-931dec69efa4';
+const CTA_ENDPOINT = 'https://n8n.heysnaply.com/webhook/e5260e03-6ded-4448-ab29-52f88af0d35b';
+const PROMPTS_API = 'https://n8n.heysnaply.com/webhook/32117416-351b-4703-8ffb-931dec69efa4';
 
 const LANGUAGES = [
     'English', 'Tagalog', 'Taglish', 'Spanish', 'French', 'German', 'Italian', 'Portuguese',

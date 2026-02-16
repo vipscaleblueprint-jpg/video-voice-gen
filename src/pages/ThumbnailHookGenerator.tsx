@@ -5,7 +5,7 @@ import { Zap, Loader2 } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 
 // Placeholder endpoint - user should replace with actual if different
-const API_ENDPOINT = 'https://n8n.srv1151765.hstgr.cloud/webhook/8f78f1c8-3494-4879-8e6b-ceb98bccc961';
+const API_ENDPOINT = 'https://n8n.heysnaply.com/webhook/8f78f1c8-3494-4879-8e6b-ceb98bccc961';
 const ThumbnailHookGenerator = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [titles, setTitles] = useState<string[] | null>(null);

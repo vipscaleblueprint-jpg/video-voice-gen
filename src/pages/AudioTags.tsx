@@ -3,7 +3,7 @@ import { AudioTagsForm, type AudioTagsFormPayload } from '@/components/AudioTags
 import { AudioTagsResponseDisplay } from '@/components/AudioTagsResponseDisplay';
 import { Mic, Loader2 } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
-const API_ENDPOINT = 'https://n8n.srv1151765.hstgr.cloud/webhook/audio-tags';
+const API_ENDPOINT = 'https://n8n.heysnaply.com/webhook/audio-tags';
 const AudioTags = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [response, setResponse] = useState<string[] | null>(null);

@@ -24,7 +24,7 @@ interface ApiResponse {
   }>;
 }
 
-const API_ENDPOINT = 'https://n8n.srv1151765.hstgr.cloud/webhook/reel-copy';
+const API_ENDPOINT = 'https://n8n.heysnaply.com/webhook/reel-copy';
 
 const Index = () => {
   const [isLoading, setIsLoading] = useState(false);
