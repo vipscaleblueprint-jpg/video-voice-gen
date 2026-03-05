@@ -87,7 +87,7 @@ export const AudioTagsForm = ({ onSubmit, isLoading }: AudioTagsFormProps) => {
         setError(null);
 
         try {
-            const res = await fetch('https://n8n.srv1151765.hstgr.cloud/webhook/tone-suggest', {
+            const res = await fetch('https://n8n.heysnaply.com/webhook/suggest-tone', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ scripts: validScripts }),
